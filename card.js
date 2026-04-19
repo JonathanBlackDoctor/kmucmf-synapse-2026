@@ -369,11 +369,7 @@
 
         ${verseBlock(j.group)}
 
-        <button class="dl-btn" title="PNG 다운로드">⬇</button>
-        <div class="dl-menu">
-          <button class="dl-opt" data-q="std">표준 화질<span class="dl-opt-sub">빠름 · scale ×2</span></button>
-          <button class="dl-opt" data-q="hq">고화질<span class="dl-opt-sub">정확히 일치 · ×3</span></button>
-        </div>
+        <button class="dl-btn" title="JPG 다운로드">⬇</button>
       </article>
     `;
   }
@@ -476,11 +472,7 @@
 
         ${verseBlock(s.group)}
 
-        <button class="dl-btn" title="PNG 다운로드">⬇</button>
-        <div class="dl-menu">
-          <button class="dl-opt" data-q="std">표준 화질<span class="dl-opt-sub">빠름 · scale ×2</span></button>
-          <button class="dl-opt" data-q="hq">고화질<span class="dl-opt-sub">정확히 일치 · ×3</span></button>
-        </div>
+        <button class="dl-btn" title="JPG 다운로드">⬇</button>
       </article>
     `;
   }

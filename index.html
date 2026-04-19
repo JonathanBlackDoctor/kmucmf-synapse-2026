@@ -7,9 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Noto+Serif+KR:wght@400;500;600&family=Cormorant+Garamond:ital,wght@1,400;1,500;1,600&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://unpkg.com/html-to-image@1.11.13/dist/html-to-image.js"></script>
 <style>
   :root {
     --bg-0: #0B1329;
@@ -498,54 +496,8 @@
     font-size: 14px;
     opacity: 0; transition: opacity .2s, background .2s;
   }
-  .card:hover .dl-btn,
-  .card .dl-btn.menu-open { opacity: 1; }
+  .card:hover .dl-btn { opacity: 1; }
   .dl-btn:hover { background: rgba(127,178,232,0.25); }
-
-  /* Download quality menu */
-  .dl-menu {
-    position: absolute; top: 48px; right: 10px;
-    z-index: 11;
-    background: rgba(11,19,41,0.96);
-    border: 1px solid rgba(127,178,232,0.45);
-    min-width: 128px;
-    display: none;
-    flex-direction: column;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.55);
-    backdrop-filter: blur(6px);
-  }
-  .dl-menu.open { display: flex; }
-  .dl-opt {
-    padding: 9px 14px;
-    font-family: 'Noto Sans KR', sans-serif;
-    font-size: 12px; letter-spacing: 0.05em;
-    color: var(--ink-0);
-    background: transparent; border: none;
-    text-align: left; cursor: pointer;
-    border-bottom: 1px solid rgba(127,178,232,0.15);
-  }
-  .dl-opt:last-child { border-bottom: none; }
-  .dl-opt:hover { background: rgba(127,178,232,0.18); color: #fff; }
-  .dl-opt .dl-opt-sub {
-    display: block;
-    font-size: 10px; letter-spacing: 0.04em;
-    color: var(--cy-1); opacity: 0.75; margin-top: 2px;
-  }
-
-  /* ZIP dropdown for "download all" */
-  .btn-group { position: relative; display: inline-block; }
-  .dl-all-menu {
-    position: absolute; top: calc(100% + 6px); left: 0;
-    z-index: 20;
-    background: rgba(11,19,41,0.96);
-    border: 1px solid rgba(127,178,232,0.45);
-    min-width: 200px;
-    display: none;
-    flex-direction: column;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.55);
-    backdrop-filter: blur(6px);
-  }
-  .dl-all-menu.open { display: flex; }
 
   /* loading / overlay while downloading */
   .dl-overlay {
@@ -573,15 +525,8 @@
   <div class="kicker">선배와 후배, 두 뉴런이 시냅스로 만나는 지점. 신호가 흐르고, 공동체가 자라납니다.</div>
   <div class="controls">
     <button class="btn view-toggle" id="btn-view-poster">✦ 전체 포스터 보기</button>
-    <div class="btn-group">
-      <button class="btn primary" id="btn-download-all">⬇ 전체 56장 ZIP 다운로드 ▾</button>
-      <div class="dl-all-menu" id="dl-all-menu">
-        <button class="dl-opt" data-q="std">표준 화질 ZIP<span class="dl-opt-sub">빠름 · scale ×2</span></button>
-        <button class="dl-opt" data-q="hq">고화질 ZIP<span class="dl-opt-sub">정확히 일치 · pixelRatio ×3</span></button>
-      </div>
-    </div>
+    <button class="btn primary" id="btn-download-all">⬇ 전체 57장 ZIP 다운로드</button>
     <button class="btn" id="btn-download-json">⬇ cards_data.json</button>
-    <a class="btn" href="cards_data.json" download style="text-decoration:none;display:inline-block">JSON 파일</a>
   </div>
   <nav class="group-nav" id="group-nav"></nav>
 </header>
@@ -640,170 +585,74 @@
     app.appendChild(section);
   });
 
-  // Wait for every image inside a node to finish loading
-  async function waitImgs(node) {
-    const imgs = node.querySelectorAll('img');
-    await Promise.all([...imgs].map(img => {
-      if (img.complete && img.naturalHeight > 0) return Promise.resolve();
-      return new Promise(r => { img.onload = img.onerror = r; });
-    }));
-    if (document.fonts && document.fonts.ready) await document.fonts.ready;
-  }
+  const groupSlug = (g) => g.toLowerCase().replace(/\./g, '');
 
-  // Standard-quality render (html2canvas, fast but imperfect with masks/filters)
-  async function renderCardStd(cardEl) {
-    await waitImgs(cardEl);
-    const canvas = await html2canvas(cardEl, {
-      backgroundColor: null,
-      scale: 2,
-      useCORS: true,
-      allowTaint: false,
-      logging: false
-    });
-    return new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/png'));
-  }
-
-  // High-quality render (html-to-image: SVG foreignObject → Chrome native rendering)
-  // Matches on-screen appearance exactly — handles mask-image, mix-blend-mode, SVG filters.
-  async function renderCardHQ(cardEl) {
-    await waitImgs(cardEl);
-    // Extra settle tick so every layer has committed
-    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-    const dataUrl = await htmlToImage.toPng(cardEl, {
-      pixelRatio: 3,
-      cacheBust: false,
-      backgroundColor: null,
-      skipFonts: false,
-      style: { transform: 'none' },
-      filter: (n) => !(n.classList && (n.classList.contains('dl-btn') || n.classList.contains('dl-menu')))
-    });
-    const res = await fetch(dataUrl);
-    return await res.blob();
-  }
-
-  async function renderCardBlob(cardEl, quality) {
-    // Freeze all animations during capture for pixel-perfect match with paused state
-    document.documentElement.classList.add('render-mode');
-    // Small tick so the freeze takes effect before html2canvas/html-to-image snapshots
-    await new Promise(r => requestAnimationFrame(r));
-    try {
-      return quality === 'hq' ? await renderCardHQ(cardEl) : await renderCardStd(cardEl);
-    } finally {
-      document.documentElement.classList.remove('render-mode');
-    }
-  }
-
-  function filenameFor(cardEl) {
+  function cardMeta(cardEl) {
     const kind = cardEl.dataset.kind;
     const idx = cardEl.dataset.idx;
-    let name, group;
     if (kind === 'senior') {
-      const sIdx = parseInt(idx.replace('s',''));
-      const s = SENIORS[sIdx];
-      name = s.name; group = s.group;
-    } else {
-      const j = JUNIORS[parseInt(idx)];
-      name = j.name; group = j.group;
+      const s = SENIORS[parseInt(idx.replace('s',''))];
+      return { kind, name: s.name, group: s.group };
     }
-    return `${name}_${group}.png`;
+    const j = JUNIORS[parseInt(idx)];
+    return { kind, name: j.name, group: j.group };
+  }
+  function staticCardPath(cardEl) {
+    const { kind, name, group } = cardMeta(cardEl);
+    const folder = kind === 'senior' ? 'seniors' : 'juniors';
+    return `cards/${folder}/${groupSlug(group)}-${name}.jpg`;
+  }
+  function staticCardFilename(cardEl) {
+    const { name, group } = cardMeta(cardEl);
+    return `${groupSlug(group)}-${name}.jpg`;
   }
 
-  function closePerCardMenus() {
-    document.querySelectorAll('.dl-menu.open').forEach(m => m.classList.remove('open'));
-    document.querySelectorAll('.dl-btn.menu-open').forEach(b => b.classList.remove('menu-open'));
-  }
-  function closeAllMenus() {
-    closePerCardMenus();
-    document.getElementById('dl-all-menu').classList.remove('open');
-  }
-
-  // Per-card download: click ⬇ → open menu; click menu option → render + save
-  document.addEventListener('click', async (e) => {
-    const opt = e.target.closest('.dl-menu .dl-opt');
-    if (opt) {
-      const card = opt.closest('.card');
-      const btn = card.querySelector('.dl-btn');
-      const menu = card.querySelector('.dl-menu');
-      const quality = opt.dataset.q;
-      closeAllMenus();
-      const overlay = document.getElementById('dl-overlay');
-      const status = document.getElementById('dl-status');
-      overlay.classList.add('active');
-      status.textContent = quality === 'hq' ? '고화질 렌더링 중…' : '렌더링 중…';
-      btn.style.visibility = 'hidden';
-      try {
-        const blob = await renderCardBlob(card, quality);
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = filenameFor(card);
-        a.click();
-      } catch (err) {
-        console.error(err);
-        status.textContent = '실패: ' + err.message;
-        await new Promise(r => setTimeout(r, 1500));
-      } finally {
-        btn.style.visibility = '';
-        overlay.classList.remove('active');
-      }
-      return;
-    }
+  // Per-card download: click ⬇ → trigger download of pre-rendered static JPG
+  document.addEventListener('click', (e) => {
     const btn = e.target.closest('.dl-btn');
-    if (btn) {
-      e.stopPropagation();
-      const card = btn.closest('.card');
-      const menu = card.querySelector('.dl-menu');
-      const willOpen = !menu.classList.contains('open');
-      closeAllMenus();
-      if (willOpen) {
-        menu.classList.add('open');
-        btn.classList.add('menu-open');
-      }
-      return;
-    }
-    // click outside closes menus
-    if (!e.target.closest('.dl-menu') && !e.target.closest('.dl-all-menu') && !e.target.closest('#btn-download-all')) {
-      closeAllMenus();
-    }
+    if (!btn) return;
+    e.stopPropagation();
+    const card = btn.closest('.card');
+    const a = document.createElement('a');
+    a.href = staticCardPath(card);
+    a.download = staticCardFilename(card);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   });
 
-  // ZIP download (with quality menu)
-  const btnAll = document.getElementById('btn-download-all');
-  const allMenu = document.getElementById('dl-all-menu');
-  btnAll.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const willOpen = !allMenu.classList.contains('open');
-    closeAllMenus();
-    if (willOpen) allMenu.classList.add('open');
-  });
-  allMenu.addEventListener('click', async (e) => {
-    const opt = e.target.closest('.dl-opt');
-    if (!opt) return;
-    const quality = opt.dataset.q;
-    closeAllMenus();
+  // ZIP download — fetch pre-rendered JPGs and bundle via JSZip
+  document.getElementById('btn-download-all').addEventListener('click', async () => {
     const overlay = document.getElementById('dl-overlay');
     const status = document.getElementById('dl-status');
     overlay.classList.add('active');
-    const zip = new JSZip();
     const cards = document.querySelectorAll('.card');
-    document.querySelectorAll('.dl-btn').forEach(b => b.style.visibility = 'hidden');
+    const zip = new JSZip();
+    const seniorsDir = zip.folder('seniors');
+    const juniorsDir = zip.folder('juniors');
     try {
       for (let i = 0; i < cards.length; i++) {
-        status.textContent = `${quality === 'hq' ? '고화질 ' : ''}렌더링 중…  ${i+1} / ${cards.length}`;
-        const blob = await renderCardBlob(cards[i], quality);
-        zip.file(filenameFor(cards[i]), blob);
+        const card = cards[i];
+        const { kind } = cardMeta(card);
+        status.textContent = `파일 로드 중…  ${i+1} / ${cards.length}`;
+        const res = await fetch(staticCardPath(card));
+        if (!res.ok) throw new Error(`${staticCardPath(card)}: HTTP ${res.status}`);
+        const blob = await res.blob();
+        const dir = kind === 'senior' ? seniorsDir : juniorsDir;
+        dir.file(staticCardFilename(card), blob);
       }
       status.textContent = 'ZIP 압축 중…';
-      const zipBlob = await zip.generateAsync({type:'blob'});
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(zipBlob);
-      a.download = quality === 'hq' ? 'CNAPSE_2026_cards_HQ.zip' : 'CNAPSE_2026_cards.zip';
+      a.download = 'CNAPSE_2026_cards.zip';
       a.click();
+      URL.revokeObjectURL(a.href);
     } catch (err) {
       console.error(err);
       status.textContent = '실패: ' + err.message;
       await new Promise(r => setTimeout(r, 1800));
     } finally {
-      document.querySelectorAll('.dl-btn').forEach(b => b.style.visibility = '');
       overlay.classList.remove('active');
     }
   });
