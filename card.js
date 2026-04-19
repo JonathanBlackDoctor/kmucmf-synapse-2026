@@ -1,5 +1,5 @@
 // C-NAPSE Card rendering — v3.2
-// vanilla DOM/SVG for fidelity + html2canvas compatibility
+// vanilla DOM/SVG — rendered as static PNGs at build time via puppeteer
 
 (function () {
   const { imgUrl, VERSES, SENIORS, JUNIORS } = window.__CNAPSE;
@@ -369,7 +369,11 @@
 
         ${verseBlock(j.group)}
 
-        <button class="dl-btn" title="JPG 다운로드">⬇</button>
+        <button class="dl-btn" title="PNG 다운로드">⬇</button>
+        <div class="dl-menu">
+          <button class="dl-opt" data-q="std">표준<span class="dl-opt-sub">2x · ≈0.3MB</span></button>
+          <button class="dl-opt" data-q="hq">고화질<span class="dl-opt-sub">3x · ≈0.6MB</span></button>
+        </div>
       </article>
     `;
   }
@@ -472,7 +476,11 @@
 
         ${verseBlock(s.group)}
 
-        <button class="dl-btn" title="JPG 다운로드">⬇</button>
+        <button class="dl-btn" title="PNG 다운로드">⬇</button>
+        <div class="dl-menu">
+          <button class="dl-opt" data-q="std">표준<span class="dl-opt-sub">2x · ≈0.3MB</span></button>
+          <button class="dl-opt" data-q="hq">고화질<span class="dl-opt-sub">3x · ≈0.6MB</span></button>
+        </div>
       </article>
     `;
   }

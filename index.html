@@ -496,8 +496,54 @@
     font-size: 14px;
     opacity: 0; transition: opacity .2s, background .2s;
   }
-  .card:hover .dl-btn { opacity: 1; }
+  .card:hover .dl-btn,
+  .card .dl-btn.menu-open { opacity: 1; }
   .dl-btn:hover { background: rgba(127,178,232,0.25); }
+
+  /* Download quality menu */
+  .dl-menu {
+    position: absolute; top: 48px; right: 10px;
+    z-index: 11;
+    background: rgba(11,19,41,0.96);
+    border: 1px solid rgba(127,178,232,0.45);
+    min-width: 140px;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px);
+  }
+  .dl-menu.open { display: flex; }
+  .dl-opt {
+    padding: 9px 14px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px; letter-spacing: 0.05em;
+    color: var(--ink-0);
+    background: transparent; border: none;
+    text-align: left; cursor: pointer;
+    border-bottom: 1px solid rgba(127,178,232,0.15);
+  }
+  .dl-opt:last-child { border-bottom: none; }
+  .dl-opt:hover { background: rgba(127,178,232,0.18); color: #fff; }
+  .dl-opt .dl-opt-sub {
+    display: block;
+    font-size: 10px; letter-spacing: 0.04em;
+    color: var(--cy-1); opacity: 0.75; margin-top: 2px;
+  }
+
+  /* ZIP dropdown for "download all" */
+  .btn-group { position: relative; display: inline-block; }
+  .dl-all-menu {
+    position: absolute; top: calc(100% + 6px); left: 0;
+    z-index: 20;
+    background: rgba(11,19,41,0.96);
+    border: 1px solid rgba(127,178,232,0.45);
+    min-width: 220px;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px);
+  }
+  .dl-all-menu.open { display: flex; }
 
   /* loading / overlay while downloading */
   .dl-overlay {
@@ -525,7 +571,13 @@
   <div class="kicker">선배와 후배, 두 뉴런이 시냅스로 만나는 지점. 신호가 흐르고, 공동체가 자라납니다.</div>
   <div class="controls">
     <button class="btn view-toggle" id="btn-view-poster">✦ 전체 포스터 보기</button>
-    <button class="btn primary" id="btn-download-all">⬇ 전체 57장 ZIP 다운로드</button>
+    <div class="btn-group">
+      <button class="btn primary" id="btn-download-all">⬇ 전체 57장 ZIP 다운로드 ▾</button>
+      <div class="dl-all-menu" id="dl-all-menu">
+        <button class="dl-opt" data-q="std">표준 일괄<span class="dl-opt-sub">2x · 약 17MB</span></button>
+        <button class="dl-opt" data-q="hq">고화질 일괄<span class="dl-opt-sub">3x · 약 33MB</span></button>
+      </div>
+    </div>
     <button class="btn" id="btn-download-json">⬇ cards_data.json</button>
   </div>
   <nav class="group-nav" id="group-nav"></nav>
@@ -586,6 +638,7 @@
   });
 
   const groupSlug = (g) => g.toLowerCase().replace(/\./g, '');
+  const QUALITY_ROOT = { std: 'cards', hq: 'cards-hq' };
 
   function cardMeta(cardEl) {
     const kind = cardEl.dataset.kind;
@@ -597,32 +650,71 @@
     const j = JUNIORS[parseInt(idx)];
     return { kind, name: j.name, group: j.group };
   }
-  function staticCardPath(cardEl) {
+  function staticCardPath(cardEl, quality) {
     const { kind, name, group } = cardMeta(cardEl);
     const folder = kind === 'senior' ? 'seniors' : 'juniors';
-    return `cards/${folder}/${groupSlug(group)}-${name}.jpg`;
+    return `${QUALITY_ROOT[quality]}/${folder}/${groupSlug(group)}-${name}.png`;
   }
   function staticCardFilename(cardEl) {
     const { name, group } = cardMeta(cardEl);
-    return `${groupSlug(group)}-${name}.jpg`;
+    return `${groupSlug(group)}-${name}.png`;
   }
 
-  // Per-card download: click ⬇ → trigger download of pre-rendered static JPG
+  function closePerCardMenus() {
+    document.querySelectorAll('.dl-menu.open').forEach(m => m.classList.remove('open'));
+    document.querySelectorAll('.dl-btn.menu-open').forEach(b => b.classList.remove('menu-open'));
+  }
+  function closeAllMenus() {
+    closePerCardMenus();
+    document.getElementById('dl-all-menu').classList.remove('open');
+  }
+
   document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.dl-btn');
-    if (!btn) return;
-    e.stopPropagation();
-    const card = btn.closest('.card');
-    const a = document.createElement('a');
-    a.href = staticCardPath(card);
-    a.download = staticCardFilename(card);
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    // Per-card quality option → trigger static download
+    const opt = e.target.closest('.card .dl-menu .dl-opt');
+    if (opt) {
+      const card = opt.closest('.card');
+      const quality = opt.dataset.q;
+      closeAllMenus();
+      const a = document.createElement('a');
+      a.href = staticCardPath(card, quality);
+      a.download = staticCardFilename(card);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      return;
+    }
+    // Per-card ⬇ button → toggle quality menu
+    const btn = e.target.closest('.card .dl-btn');
+    if (btn) {
+      e.stopPropagation();
+      const card = btn.closest('.card');
+      const menu = card.querySelector('.dl-menu');
+      const willOpen = !menu.classList.contains('open');
+      closeAllMenus();
+      if (willOpen) { menu.classList.add('open'); btn.classList.add('menu-open'); }
+      return;
+    }
+    // Click outside any menu closes them
+    if (!e.target.closest('.dl-menu') && !e.target.closest('.dl-all-menu') && !e.target.closest('#btn-download-all')) {
+      closeAllMenus();
+    }
   });
 
-  // ZIP download — fetch pre-rendered JPGs and bundle via JSZip
-  document.getElementById('btn-download-all').addEventListener('click', async () => {
+  // ZIP header button → toggle quality dropdown
+  const btnAll = document.getElementById('btn-download-all');
+  const allMenu = document.getElementById('dl-all-menu');
+  btnAll.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = !allMenu.classList.contains('open');
+    closeAllMenus();
+    if (willOpen) allMenu.classList.add('open');
+  });
+  allMenu.addEventListener('click', async (e) => {
+    const opt = e.target.closest('.dl-opt');
+    if (!opt) return;
+    const quality = opt.dataset.q;
+    closeAllMenus();
     const overlay = document.getElementById('dl-overlay');
     const status = document.getElementById('dl-status');
     overlay.classList.add('active');
@@ -634,9 +726,10 @@
       for (let i = 0; i < cards.length; i++) {
         const card = cards[i];
         const { kind } = cardMeta(card);
-        status.textContent = `파일 로드 중…  ${i+1} / ${cards.length}`;
-        const res = await fetch(staticCardPath(card));
-        if (!res.ok) throw new Error(`${staticCardPath(card)}: HTTP ${res.status}`);
+        status.textContent = `${quality === 'hq' ? '고화질 ' : ''}파일 로드 중…  ${i+1} / ${cards.length}`;
+        const url = staticCardPath(card, quality);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
         const blob = await res.blob();
         const dir = kind === 'senior' ? seniorsDir : juniorsDir;
         dir.file(staticCardFilename(card), blob);
@@ -645,7 +738,7 @@
       const zipBlob = await zip.generateAsync({ type: 'blob' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(zipBlob);
-      a.download = 'CNAPSE_2026_cards.zip';
+      a.download = quality === 'hq' ? 'CNAPSE_2026_cards_HQ.zip' : 'CNAPSE_2026_cards.zip';
       a.click();
       URL.revokeObjectURL(a.href);
     } catch (err) {
