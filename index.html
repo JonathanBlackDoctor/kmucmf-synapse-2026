@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>C-NAPSE · 2026 · 계명 CMF 매칭 카드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Noto+Serif+KR:wght@400;500;600&family=Cormorant+Garamond:ital,wght@1,400;1,500;1,600&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://unpkg.com/html-to-image@1.11.13/dist/html-to-image.js"></script>
+<style>
+  :root {
+    --bg-0: #0B1329;
+    --bg-1: #0D1836;
+    --ink-0: #EAF2FF;
+    --cy-0: #A5C4F0;
+    --cy-1: #7FB2E8;
+    --cy-2: #C5D6F0;
+    --cy-3: #87B0E8;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: radial-gradient(ellipse at 30% 20%, #0E1A3E 0%, var(--bg-0) 55%, #070C1E 100%);
+    color: var(--ink-0);
+    font-family: 'Noto Sans KR', -apple-system, sans-serif;
+    min-height: 100vh;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(197,214,240,0.6), transparent 60%),
+      radial-gradient(1px 1px at 70% 80%, rgba(135,176,232,0.5), transparent 60%),
+      radial-gradient(1px 1px at 40% 70%, rgba(165,196,240,0.4), transparent 60%),
+      radial-gradient(1px 1px at 85% 15%, rgba(234,242,255,0.5), transparent 60%),
+      radial-gradient(1px 1px at 10% 85%, rgba(127,178,232,0.5), transparent 60%),
+      radial-gradient(1.5px 1.5px at 55% 45%, rgba(234,242,255,0.3), transparent 60%);
+    opacity: 0.35; z-index: 0;
+  }
+
+  /* Neural network background layer */
+  .neural-bg {
+    position: fixed; inset: 0;
+    width: 100vw; height: 100vh;
+    z-index: 0; pointer-events: none;
+    opacity: 1;
+  }
+
+  /* ── Render-mode (Puppeteer + in-page HQ capture) ── */
+  /* Pauses every animation/transition so PNG captures are pixel-perfect. */
+  html.render-mode *,
+  html.render-mode *::before,
+  html.render-mode *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  html.render-mode .syn-shimmer,
+  html.render-mode .syn-pulse,
+  html.render-mode .syn-pulse-core { display: none !important; }
+  html.render-mode .neural-bg { display: none !important; }
+
+  /* ── Intermittent shimmer (sibling to SMIL-driven pulse) ── */
+  /* Cycle: 76% idle invisible → 22% visible dash flow → 2% fade. Dur/delay per-synapse via inline style. */
+  @keyframes syn-shimmer-flow {
+    0%   { stroke-dashoffset: 80; opacity: 0; }
+    76%  { stroke-dashoffset: 80; opacity: 0; }
+    78%  { stroke-dashoffset: 75; opacity: 0.85; }
+    96%  { stroke-dashoffset: 5;  opacity: 0.85; }
+    98%  { stroke-dashoffset: 0;  opacity: 0; }
+    100% { stroke-dashoffset: 0;  opacity: 0; }
+  }
+  .syn-shimmer {
+    animation: syn-shimmer-flow var(--syn-dur, 5s) linear infinite;
+    animation-delay: var(--syn-delay, 0s);
+  }
+
+  /* ── Poster view overlay ── */
+  /* iframe renders poster at native 1240×1754; JS scales iframe via CSS transform to fit viewport. */
+  .poster-view {
+    position: fixed; inset: 0; z-index: 500;
+    background: radial-gradient(ellipse at 50% 0%, #0D1836 0%, #0B1329 55%, #070C1E 100%);
+    opacity: 0; visibility: hidden;
+    transition: opacity .42s ease, visibility .42s;
+    overflow: auto;
+    display: flex; align-items: safe center; justify-content: safe center;
+    padding: 24px;
+  }
+  .poster-view.active { opacity: 1; visibility: visible; }
+  .pv-frame-wrap {
+    position: relative; z-index: 510;
+    overflow: hidden;
+    flex: 0 0 auto;
+    /* width/height set dynamically by fitPosterFrame() to match scaled iframe */
+  }
+  .pv-frame {
+    width: 1240px !important;
+    height: 1754px !important;
+    border: 0; display: block;
+    background: #0B1329;
+    box-shadow: 0 20px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(127,178,232,0.15);
+    transform-origin: top left;
+  }
+
+  /* ── View-toggle + back button: gradient + pulsing glow ── */
+  @keyframes view-btn-glow {
+    0%, 100% {
+      box-shadow:
+        0 0 12px rgba(127,178,232,0.40),
+        0 0 28px rgba(127,178,232,0.18),
+        inset 0 0 12px rgba(127,178,232,0.08);
+      border-color: rgba(127,178,232,0.65);
+    }
+    50% {
+      box-shadow:
+        0 0 22px rgba(127,178,232,0.70),
+        0 0 46px rgba(127,178,232,0.42),
+        inset 0 0 18px rgba(165,196,240,0.22);
+      border-color: rgba(197,214,240,0.95);
+    }
+  }
+  .btn.view-toggle {
+    background: linear-gradient(135deg,
+      rgba(127,178,232,0.22) 0%,
+      rgba(165,196,240,0.36) 50%,
+      rgba(127,178,232,0.22) 100%);
+    border: 1.5px solid rgba(127,178,232,0.65);
+    color: var(--ink-0);
+    font-weight: 600;
+    letter-spacing: 0.11em;
+    padding: 13px 22px;
+    animation: view-btn-glow 2.6s ease-in-out infinite;
+    position: relative;
+  }
+  .btn.view-toggle:hover {
+    transform: translateY(-1px);
+    animation-duration: 1.5s;
+  }
+  .pv-back {
+    position: absolute; top: 24px; left: 24px; z-index: 540;
+    background: linear-gradient(135deg,
+      rgba(127,178,232,0.28) 0%,
+      rgba(165,196,240,0.42) 50%,
+      rgba(127,178,232,0.28) 100%);
+    border: 1.5px solid rgba(127,178,232,0.70);
+    color: var(--ink-0);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 13px; font-weight: 600; letter-spacing: 0.12em;
+    padding: 12px 22px; border-radius: 8px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    animation: view-btn-glow 2.6s ease-in-out infinite;
+    transition: transform .2s;
+  }
+  .pv-back:hover { transform: translateX(-3px); animation-duration: 1.5s; }
+
+  /* Transition keyframes */
+  @keyframes view-shrink {
+    from { transform: scale(1); opacity: 1; filter: blur(0); }
+    to   { transform: scale(0.82); opacity: 0; filter: blur(3px); }
+  }
+  @keyframes view-grow {
+    from { transform: scale(1.08); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+  @keyframes view-cards-return {
+    from { transform: scale(0.82); opacity: 0; filter: blur(3px); }
+    to   { transform: scale(1); opacity: 1; filter: blur(0); }
+  }
+  body.view-transitioning main,
+  body.view-transitioning .page-header {
+    animation: view-shrink .42s ease forwards;
+  }
+  body.view-returning main,
+  body.view-returning .page-header {
+    animation: view-cards-return .42s ease;
+  }
+  body.view-posters main,
+  body.view-posters .page-header { display: none; }
+  .poster-view.active .pv-frame-wrap {
+    animation: view-grow .5s ease;
+    transform-origin: center center;
+  }
+
+  /* Mobile animation throttling */
+  @media (max-width: 768px) {
+    .neural-bg .nb-sig:nth-of-type(n+8) { display: none; }
+    .syn-shimmer { animation-duration: calc(var(--syn-dur, 5s) * 1.35) !important; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .syn-shimmer, .syn-pulse, .syn-pulse-core {
+      animation: none !important;
+      display: none !important;
+    }
+    /* Neural-bg signals: pause motion but keep visible */
+    .neural-bg .nb-sig animateMotion,
+    .neural-bg .nb-sig animate { display: none; }
+  }
+
+  /* Header */
+  .page-header {
+    position: relative; z-index: 2;
+    max-width: 1400px; margin: 0 auto; padding: 48px 32px 16px;
+  }
+  .page-header .title {
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 42px; letter-spacing: 0.05em; color: var(--ink-0);
+    margin: 0;
+  }
+  .page-header .subtitle {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 0.3em; color: var(--cy-1); text-transform: uppercase;
+    margin-top: 8px;
+  }
+  .page-header .kicker {
+    font-family: 'Noto Serif KR', serif; font-size: 14px;
+    color: var(--cy-0); opacity: 0.75; margin-top: 12px; max-width: 640px;
+    line-height: 1.7;
+  }
+  .controls {
+    display: flex; gap: 12px; margin-top: 22px; flex-wrap: wrap;
+  }
+  .btn {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    background: rgba(127,178,232,0.08); color: var(--cy-0);
+    border: 1px solid rgba(127,178,232,0.35);
+    padding: 10px 18px; border-radius: 2px; cursor: pointer;
+    transition: background .2s, border-color .2s;
+  }
+  .btn:hover { background: rgba(127,178,232,0.18); border-color: var(--cy-1); }
+  .btn.primary { background: rgba(127,178,232,0.2); border-color: var(--cy-1); color: var(--ink-0); }
+
+  .group-nav {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px;
+  }
+  .group-nav a {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.15em; color: var(--cy-1);
+    border: 1px solid rgba(127,178,232,0.25);
+    padding: 5px 10px; text-decoration: none; border-radius: 1px;
+  }
+  .group-nav a:hover { background: rgba(127,178,232,0.15); }
+
+  /* Groups */
+  main { position: relative; z-index: 1; padding: 24px 32px 64px; max-width: 1400px; margin: 0 auto; }
+  .group-section { margin-top: 40px; }
+  .group-header {
+    display: flex; align-items: baseline; gap: 16px; padding-bottom: 8px;
+    border-bottom: 1px solid rgba(127,178,232,0.2); margin-bottom: 24px;
+  }
+  .group-id {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    letter-spacing: 0.2em; color: var(--cy-1);
+  }
+  .group-title {
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 22px; color: var(--ink-0); opacity: 0.85;
+  }
+  .group-verse {
+    font-family: 'Noto Serif KR', serif; font-size: 12px;
+    color: var(--cy-0); opacity: 0.6; margin-left: auto;
+  }
+
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 460px));
+    gap: 28px; justify-content: center;
+  }
+
+  /* ───────────────────────────── CARD ───────────────────────────── */
+  .card {
+    position: relative; aspect-ratio: 2/3; width: 100%;
+    background: var(--bg-0);
+    overflow: hidden;
+    border: 1px solid rgba(127,178,232,0.22);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(127,178,232,0.05) inset;
+    font-size: 0; /* reset */
+  }
+  .card * { font-size: initial; }
+
+  .card-bg-wrap {
+    position: absolute; inset: 0; overflow: hidden;
+  }
+  .card-bg {
+    position: absolute; top: 0; left: -4%;
+    width: 108%; height: 108%;
+    object-fit: cover; object-position: center;
+    filter: brightness(1.05) contrast(1.02);
+    /* v3.2 edge fade — 사각 경계선 소멸 */
+    -webkit-mask-image: radial-gradient(ellipse 85% 85% at 50% 50%, #000 55%, transparent 100%);
+            mask-image: radial-gradient(ellipse 85% 85% at 50% 50%, #000 55%, transparent 100%);
+  }
+  .card-bg-veil {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(180deg, rgba(11,19,41,0.45) 0%, rgba(11,19,41,0.30) 40%, rgba(11,19,41,0.35) 65%, rgba(11,19,41,0.70) 100%),
+      radial-gradient(ellipse at 50% 50%, rgba(11,19,41,0) 60%, rgba(11,19,41,0.25) 100%);
+  }
+
+  /* v3.2 L-brackets — 8px 균등 고정 */
+  .l-bracket {
+    position: absolute; width: 14px; height: 14px;
+    pointer-events: none; z-index: 3;
+    border-color: rgba(127,178,232,0.55);
+    border-style: solid; border-width: 0;
+  }
+  .l-bracket-tl { top: 8px; left: 8px;     border-top-width: 1px; border-left-width: 1px; }
+  .l-bracket-tr { top: 8px; right: 8px;    border-top-width: 1px; border-right-width: 1px; }
+  .l-bracket-bl { bottom: 8px; left: 8px;  border-bottom-width: 1px; border-left-width: 1px; }
+  .l-bracket-br { bottom: 8px; right: 8px; border-bottom-width: 1px; border-right-width: 1px; }
+
+  .corner {
+    position: absolute; z-index: 5;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--cy-1); letter-spacing: 0.12em;
+    line-height: 1;
+  }
+  /* v3.2 꼭짓점 픽셀 고정 (400×600 기준 수평 24px / 수직 18px) */
+  .corner-tl {
+    top: 18px; left: 24px;
+    font-size: 10px; color: var(--cy-1);
+  }
+  .corner-tr {
+    top: 18px; right: 24px;
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 12.5px; color: var(--cy-2); letter-spacing: 0.02em;
+    text-align: right; max-width: 55%;
+    line-height: 1.15;
+  }
+  .corner-bl {
+    bottom: 18px; left: 24px;
+    font-size: 11px; letter-spacing: 0.15em;
+  }
+  .corner-br {
+    bottom: 18px; right: 24px;
+    display: flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px;
+    filter: drop-shadow(0 0 6px rgba(135,176,232,0.6));
+  }
+
+  /* MENTOR section (junior card) — v3.2 70×105px 고정 */
+  .mentor {
+    position: absolute; top: 8.5%; left: 4.8%;
+    width: 46%; z-index: 4;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .mentor-neuron-wrap {
+    position: relative;
+    width: 70px; height: 105px;   /* v3.2 고정 */
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .mentor-neuron-img {
+    position: absolute; top: 0; left: -4%;
+    width: 108%; height: 108%;
+    object-fit: cover;
+    mix-blend-mode: screen;
+    opacity: 0.85;
+    filter: brightness(1.15) contrast(1.05);
+    /* v3.2 edge fade — 미니 뉴런 사각 경계 소멸 */
+    -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, #000 50%, transparent 95%);
+            mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, #000 50%, transparent 95%);
+  }
+  .mentor-info {
+    display: flex; flex-direction: column; gap: 4px;
+    padding-top: 2px;
+    min-width: 0;
+  }
+  .mentor-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.3em; color: var(--cy-1); opacity: 0.85;
+  }
+  .mentor-name {
+    font-family: 'Noto Sans KR', sans-serif; font-weight: 500;
+    font-size: 13px; color: var(--ink-0); letter-spacing: 0.04em;
+    text-shadow: 0 0 10px rgba(135,176,232,0.35);
+    white-space: nowrap;
+  }
+  .mentor-neuron-name {
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 12px; color: var(--cy-0); opacity: 0.8;
+    line-height: 1.25;
+    word-break: keep-all;
+  }
+
+  /* GUIDING section (senior card) — v3.2 70×105px 단일 고정 */
+  .guiding-stack {
+    position: absolute;
+    z-index: 4;
+    max-width: 42%;
+    display: flex; flex-direction: column;
+  }
+  .guiding-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.3em; color: var(--cy-1); opacity: 0.85;
+    margin-bottom: 10px;
+  }
+  .guiding-rows {
+    display: flex; flex-direction: column;
+    gap: 12px;
+  }
+  .guiding-rows.dense { gap: 8px; }  /* 4명 그룹 대응 */
+  .guide-row {
+    display: flex; gap: 10px; align-items: center;
+  }
+  .guide-mini-wrap {
+    position: relative; overflow: hidden; flex-shrink: 0;
+    width: 70px; height: 105px;     /* v3.2 고정 */
+  }
+  .guide-mini-img {
+    position: absolute; top: 0; left: -4%;
+    width: 108%; height: 108%;
+    object-fit: cover;
+    mix-blend-mode: screen;
+    opacity: 0.85;
+    filter: brightness(1.15) contrast(1.05);
+    -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, #000 50%, transparent 95%);
+            mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, #000 50%, transparent 95%);
+  }
+  .guide-info {
+    display: flex; flex-direction: column; gap: 3px;
+    min-width: 0; flex: 1;
+    padding-top: 2px;
+  }
+  .guide-name {
+    font-family: 'Noto Sans KR', sans-serif; font-weight: 500;
+    font-size: 13px; color: var(--ink-0); letter-spacing: 0.03em;
+    white-space: nowrap;
+    text-shadow: 0 0 8px rgba(135,176,232,0.3);
+  }
+  .guide-neuron {
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 10.5px; color: var(--cy-0); opacity: 0.72;
+    line-height: 1.25;
+    word-break: keep-all;
+    white-space: normal;
+  }
+
+  /* Synapse SVG overlay */
+  .synapse {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 4;
+  }
+
+  /* Subject name — v3.2 42px */
+  .subject-name {
+    position: absolute; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 6;
+    display: flex; align-items: center; gap: 16px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 600;
+    color: var(--ink-0);
+    text-shadow:
+      0 0 14px rgba(135,176,232,0.45),
+      0 0 4px rgba(234,242,255,0.3);
+    white-space: nowrap;
+  }
+  .subject-name .name-text {
+    font-size: 42px; letter-spacing: 0.1em;
+  }
+  .subject-name .deco {
+    font-family: 'Cormorant Garamond', serif;
+    color: var(--cy-1); opacity: 0.7;
+    font-size: 22px;
+    font-weight: 400;
+  }
+  /* Verse */
+  .verse {
+    position: absolute; left: 10%; right: 10%; bottom: 11%;
+    z-index: 5; text-align: center;
+  }
+  .verse-body {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 12px; line-height: 1.8;
+    color: var(--cy-0); opacity: 0.92;
+    text-wrap: balance;
+    word-break: keep-all;
+  }
+  /* nowrap <span> 등 내부 요소가 .card *의 font-size: initial에 걸리지 않도록 */
+  .verse-body * { font-size: inherit; }
+  .verse-ref {
+    margin-top: 8px;
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 11px; color: var(--cy-1); opacity: 0.7;
+    letter-spacing: 0.05em;
+  }
+
+  /* Download button */
+  .dl-btn {
+    position: absolute; top: 10px; right: 10px;
+    z-index: 10;
+    width: 32px; height: 32px;
+    background: rgba(11,19,41,0.7);
+    border: 1px solid rgba(127,178,232,0.4);
+    color: var(--cy-0); cursor: pointer;
+    font-size: 14px;
+    opacity: 0; transition: opacity .2s, background .2s;
+  }
+  .card:hover .dl-btn,
+  .card .dl-btn.menu-open { opacity: 1; }
+  .dl-btn:hover { background: rgba(127,178,232,0.25); }
+
+  /* Download quality menu */
+  .dl-menu {
+    position: absolute; top: 48px; right: 10px;
+    z-index: 11;
+    background: rgba(11,19,41,0.96);
+    border: 1px solid rgba(127,178,232,0.45);
+    min-width: 128px;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px);
+  }
+  .dl-menu.open { display: flex; }
+  .dl-opt {
+    padding: 9px 14px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px; letter-spacing: 0.05em;
+    color: var(--ink-0);
+    background: transparent; border: none;
+    text-align: left; cursor: pointer;
+    border-bottom: 1px solid rgba(127,178,232,0.15);
+  }
+  .dl-opt:last-child { border-bottom: none; }
+  .dl-opt:hover { background: rgba(127,178,232,0.18); color: #fff; }
+  .dl-opt .dl-opt-sub {
+    display: block;
+    font-size: 10px; letter-spacing: 0.04em;
+    color: var(--cy-1); opacity: 0.75; margin-top: 2px;
+  }
+
+  /* ZIP dropdown for "download all" */
+  .btn-group { position: relative; display: inline-block; }
+  .dl-all-menu {
+    position: absolute; top: calc(100% + 6px); left: 0;
+    z-index: 20;
+    background: rgba(11,19,41,0.96);
+    border: 1px solid rgba(127,178,232,0.45);
+    min-width: 200px;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px);
+  }
+  .dl-all-menu.open { display: flex; }
+
+  /* loading / overlay while downloading */
+  .dl-overlay {
+    position: fixed; inset: 0; z-index: 999;
+    display: none; align-items: center; justify-content: center;
+    background: rgba(7,12,30,0.85); backdrop-filter: blur(4px);
+    color: var(--ink-0); font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.2em; font-size: 12px;
+  }
+  .dl-overlay.active { display: flex; }
+
+  /* smaller screens */
+  @media (max-width: 640px) {
+    .grid { grid-template-columns: 1fr; }
+    .page-header { padding: 32px 20px 12px; }
+    main { padding: 16px 20px 48px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <h1 class="title">C-NAPSE · 2026</h1>
+  <div class="subtitle">KEIMYUNG · CMF · MATCHING CARDS · 56 SHEETS</div>
+  <div class="kicker">선배와 후배, 두 뉴런이 시냅스로 만나는 지점. 신호가 흐르고, 공동체가 자라납니다.</div>
+  <div class="controls">
+    <button class="btn view-toggle" id="btn-view-poster">✦ 전체 포스터 보기</button>
+    <div class="btn-group">
+      <button class="btn primary" id="btn-download-all">⬇ 전체 56장 ZIP 다운로드 ▾</button>
+      <div class="dl-all-menu" id="dl-all-menu">
+        <button class="dl-opt" data-q="std">표준 화질 ZIP<span class="dl-opt-sub">빠름 · scale ×2</span></button>
+        <button class="dl-opt" data-q="hq">고화질 ZIP<span class="dl-opt-sub">정확히 일치 · pixelRatio ×3</span></button>
+      </div>
+    </div>
+    <button class="btn" id="btn-download-json">⬇ cards_data.json</button>
+    <a class="btn" href="cards_data.json" download style="text-decoration:none;display:inline-block">JSON 파일</a>
+  </div>
+  <nav class="group-nav" id="group-nav"></nav>
+</header>
+
+<main id="app"></main>
+
+<div class="dl-overlay" id="dl-overlay">
+  <div id="dl-status">렌더링 중…</div>
+</div>
+
+<!-- Poster view overlay (toggleable) -->
+<div class="poster-view" id="poster-view" aria-hidden="true">
+  <button class="pv-back" id="pv-back">◂ 카드 뷰로 돌아가기</button>
+  <div class="pv-frame-wrap" id="pv-frame-wrap">
+    <iframe class="pv-frame" id="pv-frame" title="C-NAPSE 2026 시냅스 명단 포스터"></iframe>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="card.js"></script>
+<script src="neural-bg.js"></script>
+<script>
+(function(){
+  const { SENIORS, JUNIORS, VERSES } = window.__CNAPSE;
+  const { seniorCard, juniorCard } = window.__CNAPSE_CARD;
+  const app = document.getElementById('app');
+  const nav = document.getElementById('group-nav');
+
+  // Build group sections in order G.01 → G.17
+  const groupKeys = [...new Set(SENIORS.map(s=>s.group))];
+  groupKeys.forEach(gk => {
+    const sIdx = SENIORS.findIndex(s => s.group === gk);
+    const sen = SENIORS[sIdx];
+    const jrs = sen.juniors_idx.map(i => ({ j: JUNIORS[i], i }));
+    const v = VERSES[gk];
+
+    const anchor = document.createElement('a');
+    anchor.href = '#' + gk;
+    anchor.textContent = gk;
+    nav.appendChild(anchor);
+
+    const section = document.createElement('section');
+    section.className = 'group-section';
+    section.id = gk;
+    section.innerHTML = `
+      <div class="group-header">
+        <span class="group-id">${gk}</span>
+        <span class="group-title">${sen.name} &nbsp;·&nbsp; <em>${sen.neuron_name}</em></span>
+        <span class="group-verse">${v.ref_ko}</span>
+      </div>
+      <div class="grid">
+        ${seniorCard(sen, sIdx)}
+        ${jrs.map(({j, i}) => juniorCard(j, i)).join('')}
+      </div>
+    `;
+    app.appendChild(section);
+  });
+
+  // Wait for every image inside a node to finish loading
+  async function waitImgs(node) {
+    const imgs = node.querySelectorAll('img');
+    await Promise.all([...imgs].map(img => {
+      if (img.complete && img.naturalHeight > 0) return Promise.resolve();
+      return new Promise(r => { img.onload = img.onerror = r; });
+    }));
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+  }
+
+  // Standard-quality render (html2canvas, fast but imperfect with masks/filters)
+  async function renderCardStd(cardEl) {
+    await waitImgs(cardEl);
+    const canvas = await html2canvas(cardEl, {
+      backgroundColor: null,
+      scale: 2,
+      useCORS: true,
+      allowTaint: false,
+      logging: false
+    });
+    return new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/png'));
+  }
+
+  // High-quality render (html-to-image: SVG foreignObject → Chrome native rendering)
+  // Matches on-screen appearance exactly — handles mask-image, mix-blend-mode, SVG filters.
+  async function renderCardHQ(cardEl) {
+    await waitImgs(cardEl);
+    // Extra settle tick so every layer has committed
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const dataUrl = await htmlToImage.toPng(cardEl, {
+      pixelRatio: 3,
+      cacheBust: false,
+      backgroundColor: null,
+      skipFonts: false,
+      style: { transform: 'none' },
+      filter: (n) => !(n.classList && (n.classList.contains('dl-btn') || n.classList.contains('dl-menu')))
+    });
+    const res = await fetch(dataUrl);
+    return await res.blob();
+  }
+
+  async function renderCardBlob(cardEl, quality) {
+    // Freeze all animations during capture for pixel-perfect match with paused state
+    document.documentElement.classList.add('render-mode');
+    // Small tick so the freeze takes effect before html2canvas/html-to-image snapshots
+    await new Promise(r => requestAnimationFrame(r));
+    try {
+      return quality === 'hq' ? await renderCardHQ(cardEl) : await renderCardStd(cardEl);
+    } finally {
+      document.documentElement.classList.remove('render-mode');
+    }
+  }
+
+  function filenameFor(cardEl) {
+    const kind = cardEl.dataset.kind;
+    const idx = cardEl.dataset.idx;
+    let name, group;
+    if (kind === 'senior') {
+      const sIdx = parseInt(idx.replace('s',''));
+      const s = SENIORS[sIdx];
+      name = s.name; group = s.group;
+    } else {
+      const j = JUNIORS[parseInt(idx)];
+      name = j.name; group = j.group;
+    }
+    return `${name}_${group}.png`;
+  }
+
+  function closePerCardMenus() {
+    document.querySelectorAll('.dl-menu.open').forEach(m => m.classList.remove('open'));
+    document.querySelectorAll('.dl-btn.menu-open').forEach(b => b.classList.remove('menu-open'));
+  }
+  function closeAllMenus() {
+    closePerCardMenus();
+    document.getElementById('dl-all-menu').classList.remove('open');
+  }
+
+  // Per-card download: click ⬇ → open menu; click menu option → render + save
+  document.addEventListener('click', async (e) => {
+    const opt = e.target.closest('.dl-menu .dl-opt');
+    if (opt) {
+      const card = opt.closest('.card');
+      const btn = card.querySelector('.dl-btn');
+      const menu = card.querySelector('.dl-menu');
+      const quality = opt.dataset.q;
+      closeAllMenus();
+      const overlay = document.getElementById('dl-overlay');
+      const status = document.getElementById('dl-status');
+      overlay.classList.add('active');
+      status.textContent = quality === 'hq' ? '고화질 렌더링 중…' : '렌더링 중…';
+      btn.style.visibility = 'hidden';
+      try {
+        const blob = await renderCardBlob(card, quality);
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filenameFor(card);
+        a.click();
+      } catch (err) {
+        console.error(err);
+        status.textContent = '실패: ' + err.message;
+        await new Promise(r => setTimeout(r, 1500));
+      } finally {
+        btn.style.visibility = '';
+        overlay.classList.remove('active');
+      }
+      return;
+    }
+    const btn = e.target.closest('.dl-btn');
+    if (btn) {
+      e.stopPropagation();
+      const card = btn.closest('.card');
+      const menu = card.querySelector('.dl-menu');
+      const willOpen = !menu.classList.contains('open');
+      closeAllMenus();
+      if (willOpen) {
+        menu.classList.add('open');
+        btn.classList.add('menu-open');
+      }
+      return;
+    }
+    // click outside closes menus
+    if (!e.target.closest('.dl-menu') && !e.target.closest('.dl-all-menu') && !e.target.closest('#btn-download-all')) {
+      closeAllMenus();
+    }
+  });
+
+  // ZIP download (with quality menu)
+  const btnAll = document.getElementById('btn-download-all');
+  const allMenu = document.getElementById('dl-all-menu');
+  btnAll.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = !allMenu.classList.contains('open');
+    closeAllMenus();
+    if (willOpen) allMenu.classList.add('open');
+  });
+  allMenu.addEventListener('click', async (e) => {
+    const opt = e.target.closest('.dl-opt');
+    if (!opt) return;
+    const quality = opt.dataset.q;
+    closeAllMenus();
+    const overlay = document.getElementById('dl-overlay');
+    const status = document.getElementById('dl-status');
+    overlay.classList.add('active');
+    const zip = new JSZip();
+    const cards = document.querySelectorAll('.card');
+    document.querySelectorAll('.dl-btn').forEach(b => b.style.visibility = 'hidden');
+    try {
+      for (let i = 0; i < cards.length; i++) {
+        status.textContent = `${quality === 'hq' ? '고화질 ' : ''}렌더링 중…  ${i+1} / ${cards.length}`;
+        const blob = await renderCardBlob(cards[i], quality);
+        zip.file(filenameFor(cards[i]), blob);
+      }
+      status.textContent = 'ZIP 압축 중…';
+      const zipBlob = await zip.generateAsync({type:'blob'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(zipBlob);
+      a.download = quality === 'hq' ? 'CNAPSE_2026_cards_HQ.zip' : 'CNAPSE_2026_cards.zip';
+      a.click();
+    } catch (err) {
+      console.error(err);
+      status.textContent = '실패: ' + err.message;
+      await new Promise(r => setTimeout(r, 1800));
+    } finally {
+      document.querySelectorAll('.dl-btn').forEach(b => b.style.visibility = '');
+      overlay.classList.remove('active');
+    }
+  });
+
+  // JSON export
+  document.getElementById('btn-download-json').addEventListener('click', () => {
+    const data = { seniors: SENIORS, juniors: JUNIORS, verses: VERSES };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'cards_data.json';
+    a.click();
+  });
+
+  // ═══════════════════════════════════════════════════════════════
+  // Poster view manager — native-size iframe + CSS-transform fit
+  // ═══════════════════════════════════════════════════════════════
+  const POSTER_SRC = './poster/synapse-poster.html';
+  const POSTER_W = 1240, POSTER_H = 1754;
+  const posterView = document.getElementById('poster-view');
+  const frameWrap = document.getElementById('pv-frame-wrap');
+  const pvFrame = document.getElementById('pv-frame');
+  const btnViewPoster = document.getElementById('btn-view-poster');
+  const btnBack = document.getElementById('pv-back');
+  let posterLoaded = false;
+
+  // Inject !important CSS into iframe to force native 1240×1754 rendering
+  // and neutralize the poster's own fit() scaling.
+  function injectPosterOverrides() {
+    try {
+      const doc = pvFrame.contentDocument;
+      if (!doc || !doc.documentElement) return;
+      if (doc.getElementById('__pv_override')) return;
+      const style = doc.createElement('style');
+      style.id = '__pv_override';
+      style.textContent = `
+        html, body {
+          padding: 0 !important;
+          margin: 0 !important;
+          overflow: hidden !important;
+          width: 1240px !important;
+          height: 1754px !important;
+          min-height: 1754px !important;
+          background: #0B1329 !important;
+        }
+        .toolbar { display: none !important; }
+        .stage, #stage {
+          transform: none !important;
+          width: 1240px !important;
+          height: 1754px !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          --fit: 1 !important;
+        }
+        .poster, #poster {
+          width: 1240px !important;
+          height: 1754px !important;
+        }
+      `;
+      doc.documentElement.appendChild(style);
+
+      // Belt-and-suspenders: clear any inline styles fit() set on #stage
+      const resetStage = () => {
+        const stage = doc.getElementById('stage');
+        if (stage) {
+          stage.style.transform = '';
+          stage.style.height = '';
+          stage.style.removeProperty('--fit');
+        }
+      };
+      resetStage();
+      setTimeout(resetStage, 50);
+      setTimeout(resetStage, 300);
+    } catch (e) {
+      console.warn('Poster override injection failed:', e);
+    }
+  }
+
+  function fitPosterFrame() {
+    const padding = 48;
+    const vw = Math.max(0, window.innerWidth - padding);
+    const vh = Math.max(0, window.innerHeight - padding);
+    const scale = Math.min(vw / POSTER_W, vh / POSTER_H, 1);
+    pvFrame.style.transform = `scale(${scale})`;
+    pvFrame.style.transformOrigin = 'top left';
+    frameWrap.style.width  = (POSTER_W * scale) + 'px';
+    frameWrap.style.height = (POSTER_H * scale) + 'px';
+  }
+
+  pvFrame.addEventListener('load', () => {
+    injectPosterOverrides();
+    fitPosterFrame();
+  });
+
+  let resizeRaf = 0;
+  window.addEventListener('resize', () => {
+    if (resizeRaf) return;
+    resizeRaf = requestAnimationFrame(() => {
+      resizeRaf = 0;
+      if (posterView.classList.contains('active')) fitPosterFrame();
+    });
+  });
+
+  function ensurePosterLoaded() {
+    if (!posterLoaded) {
+      pvFrame.src = POSTER_SRC;
+      posterLoaded = true;
+    }
+  }
+
+  function openPoster() {
+    ensurePosterLoaded();
+    document.body.classList.add('view-transitioning');
+    setTimeout(() => {
+      document.body.classList.add('view-posters');
+      document.body.classList.remove('view-transitioning');
+      posterView.classList.add('active');
+      posterView.setAttribute('aria-hidden', 'false');
+      posterView.scrollTop = 0;
+      fitPosterFrame();
+    }, 420);
+  }
+
+  function closePoster() {
+    posterView.classList.remove('active');
+    posterView.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('view-posters');
+    document.body.classList.add('view-returning');
+    setTimeout(() => document.body.classList.remove('view-returning'), 440);
+  }
+
+  btnViewPoster.addEventListener('click', openPoster);
+  btnBack.addEventListener('click', closePoster);
+
+  // ESC to exit poster
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && posterView.classList.contains('active')) {
+      closePoster();
+    }
+  });
+})();
+</script>
+</body>
+</html>

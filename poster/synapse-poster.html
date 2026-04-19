@@ -1,0 +1,1169 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>계명 CMF 시냅스 명단 · C-NAPSE 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&family=Noto+Sans+KR:wght@400;500;600;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500;1,600&family=JetBrains+Mono:wght@400;500;600&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B1329;
+    --bg-1:#0D1836;
+    --ink:#EAF2FF;
+    --cy-1:#A5C4F0;
+    --cy-2:#7FB2E8;
+    --cy-3:#C5D6F0;
+    --glow:#87B0E8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#05080F;color:var(--ink);font-family:'Noto Sans KR',system-ui,sans-serif;}
+  body{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 0 80px;}
+
+  /* Toolbar */
+  .toolbar{
+    position:sticky;top:10px;z-index:1000;
+    display:flex;gap:8px;flex-wrap:wrap;justify-content:center;
+    background:rgba(11,19,41,0.86);backdrop-filter:blur(10px);
+    border:1px solid rgba(127,178,232,0.25);
+    padding:10px 14px;border-radius:10px;margin-bottom:20px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;
+  }
+  .toolbar button{
+    background:transparent;border:1px solid rgba(127,178,232,0.4);
+    color:var(--cy-1);padding:8px 14px;border-radius:6px;cursor:pointer;
+    font-family:inherit;font-size:11px;letter-spacing:0.08em;
+    transition:all .15s ease;
+  }
+  .toolbar button:hover{background:rgba(127,178,232,0.12);color:var(--ink);border-color:var(--cy-2);}
+  .toolbar button:disabled{opacity:0.5;cursor:wait;}
+  .toolbar .label{color:rgba(197,214,240,0.6);padding:8px 4px 8px 8px;letter-spacing:0.12em;}
+
+  /* Poster stage (for screen scaling) */
+  .stage{
+    width:1240px;height:1754px;
+    transform-origin: top center;
+  }
+  @media (max-width:1300px){
+    .stage{ transform: scale(var(--fit, 0.7)); }
+  }
+
+  /* ===== Poster ===== */
+  .poster{
+    position:relative;
+    width:1240px;height:1754px;
+    background: radial-gradient(ellipse at 50% 0%, #0D1836 0%, #0B1329 55%, #080F22 100%);
+    overflow:hidden;
+    font-family:'Noto Sans KR',sans-serif;
+    color:var(--ink);
+  }
+  /* faint noise / vignette */
+  .poster::before{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:
+      radial-gradient(ellipse at 20% 15%, rgba(135,176,232,0.06), transparent 40%),
+      radial-gradient(ellipse at 85% 80%, rgba(127,178,232,0.05), transparent 45%);
+    z-index:1;
+  }
+
+  /* Constellation background */
+  .constellation{position:absolute;inset:0;z-index:2;pointer-events:none;}
+
+  /* L-Brackets */
+  .lb{position:absolute;width:36px;height:36px;z-index:6;pointer-events:none;}
+  .lb::before,.lb::after{content:"";position:absolute;background:var(--cy-2);opacity:0.7;}
+  .lb::before{left:0;top:0;width:36px;height:1px;}
+  .lb::after{left:0;top:0;width:1px;height:36px;}
+  .lb.tl{top:32px;left:36px;}
+  .lb.tr{top:32px;right:36px;transform:scaleX(-1);}
+  .lb.bl{bottom:32px;left:36px;transform:scaleY(-1);}
+  .lb.br{bottom:32px;right:36px;transform:scale(-1,-1);}
+
+  /* HEADER */
+  .hdr{position:relative;z-index:5;padding: 56px 72px 8px;}
+  .hdr-top{display:flex;justify-content:space-between;align-items:baseline;
+    font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.18em;
+    color:var(--cy-2);opacity:0.85;}
+  .hdr-title{
+    margin-top:14px;
+    font-family:'Noto Serif KR',serif;font-weight:700;
+    font-size:72px;line-height:1.02;letter-spacing:-0.01em;
+    color:var(--ink);
+    text-shadow: 0 0 36px rgba(135,176,232,0.28), 0 0 2px rgba(234,242,255,0.4);
+  }
+  .hdr-title em.hdr-synapse{
+    font-style:normal;font-weight:normal;
+    position:relative;display:inline-block;
+    padding:0 12px;vertical-align:baseline;
+    line-height:1;
+  }
+  .hdr-synapse-text{
+    position:relative;z-index:2;
+    font-family:'Gowun Batang','Noto Serif KR',serif;
+    font-weight:700;font-size:72px;letter-spacing:0.01em;
+    color:var(--cy-1);
+    text-shadow:
+      0 0 64px rgba(135,176,232,0.78),
+      0 0 36px rgba(127,178,232,0.62),
+      0 0 16px rgba(165,196,240,0.58),
+      0 0 6px rgba(234,242,255,0.72),
+      0 0 2px rgba(234,242,255,0.9);
+    background: linear-gradient(180deg, #FFFFFF 0%, #EAF2FF 35%, #A5C4F0 78%, #7FB2E8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hdr-sub{
+    margin-top:8px;
+    font-family:'Noto Serif KR',serif;font-weight:400;
+    line-height:1.3;color:var(--cy-1);opacity:0.82;
+    max-width:720px;
+  }
+  .hdr-sub .en{display:block;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:var(--cy-2);opacity:0.78;letter-spacing:0.02em;}
+  .hdr-meta{
+    position:absolute;right:72px;top:108px;
+    text-align:right;
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.14em;
+    color:var(--cy-2);opacity:0.7;line-height:1.8;
+  }
+  .divider{position:relative;z-index:5;height:1px;margin:4px 72px 0;
+    background: linear-gradient(to right, transparent, rgba(127,178,232,0.45), transparent);}
+
+  /* GRID */
+  .grid{
+    position:relative;z-index:5;
+    margin: 10px 0 0;
+    padding: 0;
+    display:grid;grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 156px;
+    gap: 4px 0;
+    max-height: 1436px;
+    overflow: hidden;
+    justify-items: center;
+  }
+  .slot{
+    position:relative;
+    width: 540px;
+    padding: 8px 10px 8px 14px;
+    height: 156px;
+    display:grid;
+    grid-template-columns: 178px 110px 1fr;
+    gap:0 6px;
+    align-items:stretch;
+  }
+  .slot::before{
+    content:"";position:absolute;left:0;top:8px;bottom:8px;width:1px;
+    background:linear-gradient(to bottom, transparent, rgba(127,178,232,0.25), transparent);
+  }
+  .gnum{
+    position:absolute;top:4px;left:14px;
+    font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.22em;
+    color:var(--cy-2);opacity:0.85;
+  }
+
+  /* Senior area */
+  .sr{
+    grid-column:1;
+    display:grid;grid-template-rows: 1fr auto;
+    height:100%;
+    padding-bottom:3px;
+  }
+  .sr-neuron-wrap{
+    grid-row:1;
+    align-self:center;justify-self:center;
+    width:178px;height:90px;position:relative;overflow:hidden;z-index:1;
+  }
+  .sr-neuron-img{
+    position:absolute;
+    width:90px;height:178px;
+    top:50%;left:50%;
+    transform: translate(-50%, -50%) rotate(-90deg);
+    object-fit:cover;
+    mix-blend-mode:screen;opacity:0.94;
+    filter:brightness(1.2) contrast(1.06);
+    mask-image: radial-gradient(ellipse 72% 84% at 50% 50%, #000 22%, transparent 78%);
+    -webkit-mask-image: radial-gradient(ellipse 72% 84% at 50% 50%, #000 22%, transparent 78%);
+  }
+  .sr-text{
+    grid-row:2;
+    display:flex;flex-direction:column;align-items:center;
+    text-align:center;
+  }
+  .sr-name{
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Noto Sans KR',sans-serif;font-weight:600;font-size:20px;
+    color:#FFFFFF;letter-spacing:0.005em;line-height:1.1;
+    text-shadow:
+      0 0 3px rgba(11,19,41,1),
+      0 0 7px rgba(11,19,41,0.92),
+      0 0 14px rgba(11,19,41,0.65),
+      0 1px 2px rgba(0,0,0,0.9);
+    z-index:3;pointer-events:none;text-align:center;padding:0 4px;
+  }
+  .sr-en{
+    font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;
+    font-size:12px;color:var(--cy-1);opacity:0.68;margin-top:2px;
+    line-height:1.14;max-width:186px;letter-spacing:0.01em;
+  }
+
+  /* Connector */
+  .conn{grid-column:2;position:relative;align-self:stretch;z-index:3;}
+  .conn svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;}
+
+  /* Juniors area */
+  .jr{
+    grid-column:3;display:flex;flex-direction:column;justify-content:center;
+    gap:9px;padding-right:4px;
+  }
+  .jr-row{
+    display:flex;align-items:center;gap:12px;
+  }
+  .jr-neuron-wrap{
+    width:76px;height:50px;position:relative;overflow:hidden;flex-shrink:0;z-index:1;
+  }
+  .jr-neuron-img{
+    position:absolute;
+    width:50px;height:76px;
+    top:50%;left:50%;
+    transform: translate(-50%, -50%) rotate(-90deg);
+    object-fit:cover;
+    mix-blend-mode:screen;opacity:0.9;
+    filter:brightness(1.16);
+    mask-image: radial-gradient(ellipse 70% 82% at 50% 50%, #000 20%, transparent 77%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 82% at 50% 50%, #000 20%, transparent 77%);
+  }
+  .jr-text{display:flex;flex-direction:column;line-height:1.1;min-width:0;}
+  .jr-name{
+    font-family:'Noto Sans KR',sans-serif;font-weight:600;font-size:17px;
+    color:var(--ink);letter-spacing:-0.01em;
+  }
+  .jr-en{
+    font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:400;
+    font-size:12px;color:var(--cy-1);opacity:0.6;margin-top:1px;
+    letter-spacing:0.01em;line-height:1.15;
+  }
+  /* 후배 1명인 슬롯 — 큰 뉴런 */
+  .slot[data-jrc="1"] .jr-neuron-wrap{width:96px;height:64px;}
+  .slot[data-jrc="1"] .jr-neuron-img{width:64px;height:96px;}
+  .slot[data-jrc="1"] .jr-name{font-size:18px;}
+  .slot[data-jrc="1"] .jr-en{font-size:13px;}
+  /* 후배 3명인 슬롯 — 살짝 압축 */
+  .slot[data-jrc="3"] .jr{gap:4px;}
+  .slot[data-jrc="3"] .jr-neuron-wrap{width:65px;height:43px;}
+  .slot[data-jrc="3"] .jr-neuron-img{width:43px;height:65px;}
+  .slot[data-jrc="3"] .jr-name{font-size:16px;}
+  .slot[data-jrc="3"] .jr-en{font-size:11px;}
+  /* 후배 4명인 슬롯 — 공간 압축 */
+  .slot[data-jrc="4"] .jr{gap:3px;}
+  .slot[data-jrc="4"] .jr-neuron-wrap{width:48px;height:32px;}
+  .slot[data-jrc="4"] .jr-neuron-img{width:32px;height:48px;}
+  .slot[data-jrc="4"] .jr-name{font-size:14px;}
+  .slot[data-jrc="4"] .jr-en{font-size:10px;}
+
+  /* 왼쪽 열(홀수 슬롯) 시각 중심 보정 — 오른쪽으로 미세 이동 */
+  .grid > .slot:nth-child(odd){ transform: translateX(30px); }
+
+  /* Decorative slot in the G.17 empty slot — 장식 뉴런 */
+  .mark-slot{
+    position:relative;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    height:150px;gap:6px;
+  }
+  .mark-slot::before{
+    content:"";position:absolute;left:0;top:8px;bottom:8px;width:1px;
+    background:linear-gradient(to bottom, transparent, rgba(127,178,232,0.2), transparent);
+  }
+  .mark-neuron-wrap{
+    width:156px;height:96px;position:relative;overflow:hidden;
+  }
+  .mark-neuron-img{
+    position:absolute;
+    width:120px;height:180px;
+    top:50%;left:50%;
+    transform: translate(-50%, -50%);
+    object-fit:cover;
+    mix-blend-mode:screen;opacity:0.42;
+    filter:brightness(1.1) contrast(0.95);
+    mask-image: radial-gradient(ellipse 58% 58% at 50% 50%, #000 20%, transparent 76%);
+    -webkit-mask-image: radial-gradient(ellipse 58% 58% at 50% 50%, #000 20%, transparent 76%);
+  }
+  .mark-label{
+    font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.32em;
+    color:var(--cy-2);opacity:0.55;
+  }
+  .mark-label .star{color:var(--glow);margin:0 6px;filter:drop-shadow(0 0 4px #7FB2E8);}
+
+  /* Footer */
+  .footer{
+    position:absolute;z-index:5;left:72px;right:72px;bottom:56px;
+    display:flex;justify-content:space-between;align-items:flex-end;
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.2em;
+    color:var(--cy-2);opacity:0.7;
+  }
+  .footer .left{line-height:1.8;}
+  .footer .right{text-align:right;line-height:1.8;}
+  .footer .star{color:var(--glow);}
+
+  @media print{
+    @page{size: A3 portrait; margin: 0;}
+    body{background:#0B1329;padding:0;}
+    .toolbar{display:none;}
+    .stage{transform:none;width:297mm;height:420mm;}
+    .poster{width:297mm;height:420mm;}
+  }
+
+  /* Headless render mode — activated via ?render=1 in URL (Chrome headless screenshot) */
+  html.render-mode,
+  html.render-mode body{background:#0B1329;padding:0;margin:0;overflow:hidden;}
+  html.render-mode .toolbar{display:none !important;}
+  html.render-mode .stage{transform:none !important;width:1240px !important;height:1754px !important;margin:0 !important;padding:0 !important;}
+  html.render-mode .poster{width:1240px !important;height:1754px !important;}
+  html.render-mode *,
+  html.render-mode *::before,
+  html.render-mode *::after{animation:none !important;transition:none !important;}
+  html.render-mode .syn-shimmer,
+  html.render-mode .syn-pulse,
+  html.render-mode .syn-pulse-core{display:none !important;}
+  html.render-mode #neural-bg{display:none !important;}
+
+  /* Neural background (injected into .poster) */
+  #neural-bg{
+    position:absolute;inset:0;width:100%;height:100%;
+    z-index:0;pointer-events:none;opacity:0.85;
+  }
+
+  /* ── Intermittent action-potential shimmer ── */
+  @keyframes syn-shimmer-flow {
+    0%   { stroke-dashoffset: 80; opacity: 0; }
+    76%  { stroke-dashoffset: 80; opacity: 0; }
+    78%  { stroke-dashoffset: 75; opacity: 0.9; }
+    96%  { stroke-dashoffset: 5;  opacity: 0.9; }
+    98%  { stroke-dashoffset: 0;  opacity: 0; }
+    100% { stroke-dashoffset: 0;  opacity: 0; }
+  }
+  .syn-shimmer {
+    animation: syn-shimmer-flow var(--syn-dur, 5s) linear infinite;
+    animation-delay: var(--syn-delay, 0s);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .syn-shimmer, .syn-pulse, .syn-pulse-core { animation: none !important; display: none !important; }
+    #neural-bg .nb-sig animateMotion, #neural-bg .nb-sig animate { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="label">DOWNLOAD</span>
+  <button id="dl-prev">미리보기 · 1240×1754</button>
+  <button id="dl-300">인쇄 A3 · 300 DPI · 3508×4961</button>
+  <button id="dl-600">초고화질 A3 · 600 DPI · 7016×9921</button>
+  <button id="dl-print">PRINT / PDF (Cmd+P)</button>
+</div>
+
+<div class="stage" id="stage">
+<div class="poster" id="poster">
+
+  <!-- Constellation background -->
+  <svg class="constellation" viewBox="0 0 1240 1754" preserveAspectRatio="none">
+    <defs>
+      <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="2"/>
+      </filter>
+      <filter id="nodeGlow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="1.2"/>
+      </filter>
+      <filter id="hugeGlow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="4"/>
+      </filter>
+      <radialGradient id="bouton" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#EAF2FF" stop-opacity="0.9"/>
+        <stop offset="40%" stop-color="#A5C4F0" stop-opacity="0.5"/>
+        <stop offset="100%" stop-color="#7FB2E8" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="soma" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#A5C4F0" stop-opacity="0.32"/>
+        <stop offset="55%" stop-color="#7FB2E8" stop-opacity="0.1"/>
+        <stop offset="100%" stop-color="#0D1836" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="somaCore" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#EAF2FF" stop-opacity="0.5"/>
+        <stop offset="60%" stop-color="#A5C4F0" stop-opacity="0.1"/>
+        <stop offset="100%" stop-color="#7FB2E8" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <g stroke="#7FB2E8" fill="none" stroke-width="0.8" opacity="0.14" filter="url(#softGlow)">
+      <path d="M 60,240 C 320,200 560,420 860,340 S 1180,480 1210,420"/>
+      <path d="M 80,540 Q 380,640 680,590 T 1180,680"/>
+      <path d="M 40,820 C 260,760 500,920 780,860 S 1080,940 1220,880"/>
+      <path d="M 120,1100 Q 420,1180 720,1120 T 1180,1200"/>
+      <path d="M 60,1360 C 320,1300 540,1460 820,1400 S 1080,1480 1200,1420"/>
+    </g>
+    <g stroke="#A5C4F0" fill="none" stroke-width="0.6" opacity="0.11" stroke-dasharray="2 4">
+      <path d="M 200,180 C 360,340 640,280 820,420 S 1080,540 1180,620"/>
+      <path d="M 60,480 Q 280,360 520,500 T 960,460 T 1200,540"/>
+      <path d="M 40,780 C 220,900 460,780 660,900 S 960,1060 1180,980"/>
+      <path d="M 120,1240 Q 340,1120 620,1260 T 1120,1220"/>
+      <path d="M 80,1540 C 300,1460 540,1580 820,1500 S 1100,1620 1220,1540"/>
+      <path d="M 240,120 C 300,260 180,420 300,520 S 420,720 380,880"/>
+      <path d="M 880,160 C 960,320 860,480 980,600 S 1100,820 1020,980"/>
+      <path d="M 540,80 C 600,240 460,400 580,540 S 700,760 620,920 S 540,1180 640,1340"/>
+    </g>
+    <!-- 신경회로 확장 — axon 가지 + 경로 -->
+    <g stroke="#87B0E8" fill="none" stroke-width="0.5" opacity="0.1" stroke-linecap="round">
+      <!-- 축삭 곁가지 (axon collaterals) -->
+      <path d="M 180,380 Q 220,360 260,370 T 340,380 Q 380,390 420,385"/>
+      <path d="M 820,280 Q 860,270 900,290 T 980,320 Q 1020,340 1060,335"/>
+      <path d="M 140,960 Q 180,950 210,970 T 280,990 Q 320,1000 360,990"/>
+      <path d="M 860,1060 Q 900,1070 940,1060 T 1020,1050 Q 1060,1040 1100,1050"/>
+      <path d="M 300,1340 Q 340,1330 380,1350 T 460,1370"/>
+      <path d="M 760,1500 Q 800,1490 840,1510 T 920,1520"/>
+    </g>
+    <!-- 수상돌기 갈래 (dendrite branching) -->
+    <g stroke="#7FB2E8" fill="none" stroke-width="0.45" opacity="0.13" stroke-linecap="round">
+      <!-- 좌상단 -->
+      <path d="M 90,150 L 70,130 L 55,118 M 70,130 L 58,145 M 90,150 L 105,135 L 120,120 M 105,135 L 115,125 M 90,150 L 80,170"/>
+      <!-- 우상단 -->
+      <path d="M 1150,140 L 1170,122 L 1188,110 M 1170,122 L 1180,135 M 1150,140 L 1132,125 L 1115,115 M 1132,125 L 1122,138 M 1150,140 L 1160,160"/>
+      <!-- 좌하단 -->
+      <path d="M 100,1620 L 82,1605 L 68,1595 M 82,1605 L 72,1620 M 100,1620 L 118,1605 L 132,1598 M 118,1605 L 126,1618 M 100,1620 L 90,1640"/>
+      <!-- 우하단 -->
+      <path d="M 1140,1610 L 1160,1595 L 1175,1588 M 1160,1595 L 1172,1608 M 1140,1610 L 1122,1598 L 1108,1590 M 1122,1598 L 1112,1612 M 1140,1610 L 1150,1630"/>
+      <!-- 중앙 옆면 -->
+      <path d="M 30,700 L 15,682 M 30,700 L 48,685 M 30,700 L 22,720 M 30,700 L 42,718"/>
+      <path d="M 1210,720 L 1225,700 M 1210,720 L 1192,706 M 1210,720 L 1218,740 M 1210,720 L 1196,738"/>
+    </g>
+    <!-- 추가 축삭 경로 — 파선 -->
+    <g stroke="#C5D6F0" fill="none" stroke-width="0.4" opacity="0.08" stroke-dasharray="1 3">
+      <path d="M 400,60 Q 500,180 620,160 T 840,200"/>
+      <path d="M 620,1700 Q 720,1600 820,1620 T 1040,1580"/>
+      <path d="M 200,300 Q 300,420 420,410 T 620,480 T 820,520"/>
+    </g>
+    <!-- 시냅스 bouton — 기존 곡선 위 점광원 -->
+    <g>
+      <circle cx="120" cy="120" r="3.5" fill="url(#bouton)" opacity="0.7"/>
+      <circle cx="1118" cy="118" r="3.5" fill="url(#bouton)" opacity="0.7"/>
+      <circle cx="132" cy="1598" r="3.5" fill="url(#bouton)" opacity="0.7"/>
+      <circle cx="1108" cy="1590" r="3.5" fill="url(#bouton)" opacity="0.7"/>
+      <circle cx="860" cy="340" r="2.8" fill="url(#bouton)" opacity="0.6"/>
+      <circle cx="420" cy="660" r="2.5" fill="url(#bouton)" opacity="0.55"/>
+      <circle cx="980" cy="880" r="2.5" fill="url(#bouton)" opacity="0.55"/>
+      <circle cx="320" cy="900" r="2.3" fill="url(#bouton)" opacity="0.5"/>
+      <circle cx="1060" cy="335" r="2.2" fill="url(#bouton)" opacity="0.5"/>
+      <circle cx="460" cy="1370" r="2.3" fill="url(#bouton)" opacity="0.55"/>
+    </g>
+    <g fill="#87B0E8">
+      <!-- scattered dots -->
+      <circle cx="120" cy="280" r="1.2" opacity="0.8"/>
+      <circle cx="340" cy="360" r="0.9" opacity="0.6"/>
+      <circle cx="560" cy="220" r="1.4" opacity="0.9"/>
+      <circle cx="780" cy="400" r="1" opacity="0.7"/>
+      <circle cx="960" cy="260" r="1.3" opacity="0.85"/>
+      <circle cx="1120" cy="380" r="0.9" opacity="0.6"/>
+      <circle cx="180" cy="540" r="1.1" opacity="0.7"/>
+      <circle cx="420" cy="660" r="0.8" opacity="0.5"/>
+      <circle cx="680" cy="580" r="1.3" opacity="0.85"/>
+      <circle cx="900" cy="700" r="1" opacity="0.7"/>
+      <circle cx="1080" cy="620" r="0.9" opacity="0.6"/>
+      <circle cx="100" cy="820" r="1.2" opacity="0.8"/>
+      <circle cx="320" cy="900" r="0.9" opacity="0.6"/>
+      <circle cx="540" cy="840" r="1.4" opacity="0.9"/>
+      <circle cx="760" cy="920" r="1.1" opacity="0.75"/>
+      <circle cx="980" cy="880" r="0.9" opacity="0.6"/>
+      <circle cx="1180" cy="960" r="1.2" opacity="0.8"/>
+      <circle cx="160" cy="1140" r="0.9" opacity="0.6"/>
+      <circle cx="380" cy="1220" r="1.3" opacity="0.85"/>
+      <circle cx="620" cy="1160" r="1" opacity="0.7"/>
+      <circle cx="860" cy="1240" r="1.2" opacity="0.8"/>
+      <circle cx="1080" cy="1180" r="0.9" opacity="0.6"/>
+      <circle cx="220" cy="1380" r="1.1" opacity="0.75"/>
+      <circle cx="460" cy="1460" r="0.9" opacity="0.6"/>
+      <circle cx="700" cy="1400" r="1.3" opacity="0.85"/>
+      <circle cx="920" cy="1480" r="1" opacity="0.7"/>
+      <circle cx="1140" cy="1420" r="1.2" opacity="0.8"/>
+      <circle cx="60" cy="1620" r="0.9" opacity="0.6"/>
+      <circle cx="280" cy="1580" r="1.1" opacity="0.75"/>
+      <circle cx="500" cy="1660" r="1.3" opacity="0.85"/>
+      <circle cx="820" cy="1600" r="0.9" opacity="0.6"/>
+      <circle cx="1040" cy="1680" r="1" opacity="0.7"/>
+    </g>
+
+    <!-- ============ 밀도 확장: 신경망 극적 강화 ============ -->
+
+    <!-- 뉴런 실루엣 — 헤더 바깥 측면 & 푸터 영역 -->
+    <g>
+      <!-- 좌측 하단 soma + 수상돌기 + 축삭 -->
+      <circle cx="135" cy="1530" r="24" fill="url(#soma)"/>
+      <circle cx="135" cy="1530" r="11" fill="url(#somaCore)"/>
+      <g stroke="#A5C4F0" fill="none" stroke-width="0.55" opacity="0.28" stroke-linecap="round" filter="url(#softGlow)">
+        <path d="M 135,1506 Q 132,1482 126,1460 Q 120,1440 110,1425"/>
+        <path d="M 159,1530 Q 184,1530 210,1532 Q 234,1533 254,1534"/>
+        <path d="M 135,1554 Q 136,1578 139,1604 Q 142,1630 146,1654"/>
+        <path d="M 111,1530 Q 90,1528 72,1530 Q 55,1531 44,1534"/>
+        <path d="M 159,1530 C 230,1532 320,1548 400,1560 S 540,1580 620,1568" stroke-width="0.7" opacity="0.2"/>
+      </g>
+      <g stroke="#C5D6F0" fill="none" stroke-width="0.4" opacity="0.48" stroke-linecap="round">
+        <path d="M 135,1506 Q 132,1482 126,1460 Q 120,1440 110,1425"/>
+        <path d="M 159,1530 Q 184,1530 210,1532 Q 234,1533 254,1534"/>
+        <path d="M 135,1554 Q 136,1578 139,1604 Q 142,1630 146,1654"/>
+        <path d="M 111,1530 Q 90,1528 72,1530 Q 55,1531 44,1534"/>
+        <!-- 수상돌기 미세 가지 -->
+        <path d="M 126,1460 L 118,1450 M 126,1460 L 134,1448"/>
+        <path d="M 234,1533 L 238,1524 M 234,1533 L 240,1542"/>
+        <path d="M 139,1604 L 132,1610 M 139,1604 L 146,1610"/>
+      </g>
+      <circle cx="254" cy="1534" r="1.4" fill="url(#bouton)" opacity="0.8"/>
+      <circle cx="146" cy="1654" r="1.2" fill="url(#bouton)" opacity="0.7"/>
+      <circle cx="110" cy="1425" r="1.2" fill="url(#bouton)" opacity="0.7"/>
+
+      <!-- 우측 하단 soma -->
+      <circle cx="1105" cy="1540" r="23" fill="url(#soma)"/>
+      <circle cx="1105" cy="1540" r="11" fill="url(#somaCore)"/>
+      <g stroke="#A5C4F0" fill="none" stroke-width="0.55" opacity="0.28" stroke-linecap="round" filter="url(#softGlow)">
+        <path d="M 1105,1517 Q 1103,1495 1098,1472 Q 1090,1452 1080,1438"/>
+        <path d="M 1128,1540 Q 1153,1540 1178,1542 Q 1202,1544 1220,1546"/>
+        <path d="M 1105,1563 Q 1107,1587 1110,1612 Q 1114,1636 1118,1658"/>
+        <path d="M 1082,1540 Q 1060,1540 1040,1544 Q 1022,1546 1004,1548"/>
+        <path d="M 1082,1540 C 1010,1542 920,1558 840,1568 S 700,1582 620,1572" stroke-width="0.7" opacity="0.2"/>
+      </g>
+      <g stroke="#C5D6F0" fill="none" stroke-width="0.4" opacity="0.48" stroke-linecap="round">
+        <path d="M 1105,1517 Q 1103,1495 1098,1472 Q 1090,1452 1080,1438"/>
+        <path d="M 1128,1540 Q 1153,1540 1178,1542 Q 1202,1544 1220,1546"/>
+        <path d="M 1105,1563 Q 1107,1587 1110,1612 Q 1114,1636 1118,1658"/>
+        <path d="M 1082,1540 Q 1060,1540 1040,1544 Q 1022,1546 1004,1548"/>
+        <path d="M 1098,1472 L 1092,1462 M 1098,1472 L 1106,1462"/>
+        <path d="M 1178,1542 L 1184,1534 M 1178,1542 L 1186,1550"/>
+      </g>
+      <circle cx="1220" cy="1546" r="1.4" fill="url(#bouton)" opacity="0.8"/>
+      <circle cx="1118" cy="1658" r="1.2" fill="url(#bouton)" opacity="0.7"/>
+      <circle cx="1080" cy="1438" r="1.2" fill="url(#bouton)" opacity="0.7"/>
+    </g>
+
+    <!-- 축삭 tract 다발 (parallel bundles) -->
+    <g stroke="#7FB2E8" fill="none" stroke-width="0.45" opacity="0.16" filter="url(#softGlow)" stroke-linecap="round">
+      <!-- 좌측 세로 tract -->
+      <path d="M 18,260 C 24,500 34,780 20,1060 C 12,1260 22,1440 22,1560"/>
+      <path d="M 26,260 C 32,500 42,780 28,1060 C 20,1260 30,1440 30,1560"/>
+      <path d="M 34,260 C 40,500 50,780 36,1060 C 28,1260 38,1440 38,1560"/>
+      <!-- 우측 세로 -->
+      <path d="M 1216,260 C 1222,500 1232,780 1218,1060 C 1210,1260 1220,1440 1220,1560"/>
+      <path d="M 1224,260 C 1230,500 1240,780 1226,1060 C 1218,1260 1228,1440 1228,1560"/>
+      <path d="M 1232,260 C 1238,500 1248,780 1234,1060 C 1226,1260 1236,1440 1236,1560"/>
+      <!-- 중앙 세로 tract (2열 그리드 사이) -->
+      <path d="M 610,280 C 608,500 614,780 610,1060 C 606,1260 614,1380 612,1560"/>
+      <path d="M 618,280 C 616,500 622,780 618,1060 C 614,1260 622,1380 620,1560"/>
+      <path d="M 626,280 C 624,500 630,780 626,1060 C 622,1260 630,1380 628,1560"/>
+    </g>
+
+    <!-- 미엘린 segments (축삭 마디) -->
+    <g stroke="#A5C4F0" fill="none" stroke-width="2.4" opacity="0.11" stroke-linecap="round">
+      <!-- 상단 가로 tract 미엘린 -->
+      <path d="M 180,258 L 220,256"/>
+      <path d="M 258,254 L 296,253"/>
+      <path d="M 340,252 L 378,252"/>
+      <path d="M 430,254 L 470,256"/>
+      <path d="M 540,260 L 580,262"/>
+      <path d="M 860,340 L 898,342"/>
+      <path d="M 940,346 L 978,348"/>
+      <path d="M 1020,352 L 1058,354"/>
+      <!-- 하단 가로 -->
+      <path d="M 220,1460 L 260,1461"/>
+      <path d="M 302,1460 L 340,1459"/>
+      <path d="M 384,1458 L 422,1457"/>
+      <path d="M 820,1500 L 858,1501"/>
+      <path d="M 902,1498 L 940,1497"/>
+      <path d="M 984,1496 L 1022,1495"/>
+      <!-- 좌우 세로 미엘린 -->
+      <path d="M 26,360 L 26,395"/>
+      <path d="M 28,460 L 28,495"/>
+      <path d="M 30,600 L 30,635"/>
+      <path d="M 28,900 L 28,935"/>
+      <path d="M 26,1180 L 26,1215"/>
+      <path d="M 1222,360 L 1222,395"/>
+      <path d="M 1224,460 L 1224,495"/>
+      <path d="M 1226,600 L 1226,635"/>
+      <path d="M 1224,900 L 1224,935"/>
+      <path d="M 1222,1180 L 1222,1215"/>
+    </g>
+
+    <!-- 시냅스 cleft pairs (two-arc synaptic junction) -->
+    <g stroke="#C5D6F0" fill="none" stroke-width="0.55" opacity="0.4" stroke-linecap="round">
+      <path d="M 238,210 Q 248,214 258,210 M 260,210 Q 270,206 280,210"/>
+      <path d="M 888,168 Q 898,172 908,168 M 910,168 Q 920,164 930,168"/>
+      <path d="M 420,1628 Q 430,1632 440,1628 M 442,1628 Q 452,1624 462,1628"/>
+      <path d="M 790,1638 Q 800,1642 810,1638 M 812,1638 Q 822,1634 832,1638"/>
+      <path d="M 60,420 Q 70,424 80,420 M 82,420 Q 92,416 102,420"/>
+      <path d="M 1140,520 Q 1150,524 1160,520 M 1162,520 Q 1172,516 1182,520"/>
+      <path d="M 50,1220 Q 60,1224 70,1220 M 72,1220 Q 82,1216 92,1220"/>
+      <path d="M 1150,1280 Q 1160,1284 1170,1280 M 1172,1280 Q 1182,1276 1192,1280"/>
+      <path d="M 580,1612 Q 590,1616 600,1612 M 602,1612 Q 612,1608 622,1612"/>
+      <path d="M 660,1670 Q 670,1674 680,1670 M 682,1670 Q 692,1666 702,1670"/>
+    </g>
+
+    <!-- 추가 수상돌기 미세 가지 -->
+    <g stroke="#7FB2E8" fill="none" stroke-width="0.42" opacity="0.17" stroke-linecap="round">
+      <path d="M 280,180 L 270,165 M 280,180 L 288,168 M 280,180 L 292,195 M 280,180 L 268,193 M 288,168 L 286,160"/>
+      <path d="M 720,140 L 712,125 M 720,140 L 730,130 M 720,140 L 734,152 M 720,140 L 708,154 M 712,125 L 714,115"/>
+      <path d="M 980,130 L 972,115 M 980,130 L 990,120 M 980,130 L 994,142 M 980,130 L 968,144 M 990,120 L 994,110"/>
+      <path d="M 340,1680 L 332,1665 M 340,1680 L 350,1668 M 340,1680 L 354,1692 M 340,1680 L 326,1694"/>
+      <path d="M 680,1690 L 672,1675 M 680,1690 L 690,1678 M 680,1690 L 694,1702 M 680,1690 L 666,1704"/>
+      <path d="M 950,1650 L 942,1635 M 950,1650 L 960,1638 M 950,1650 L 964,1662 M 950,1650 L 936,1664"/>
+      <path d="M 600,280 L 590,268 M 600,280 L 612,272 M 600,280 L 606,296 M 600,280 L 588,292"/>
+    </g>
+
+    <!-- 펄스 호 (신호 전파 그림자) -->
+    <g fill="none" stroke="#A5C4F0" opacity="0.13" filter="url(#softGlow)" stroke-linecap="round">
+      <path d="M 135,1504 A 32 32 0 0 1 167,1530" stroke-width="0.6"/>
+      <path d="M 135,1502 A 44 44 0 0 1 179,1530" stroke-width="0.45"/>
+      <path d="M 135,1502 A 58 58 0 0 1 193,1530" stroke-width="0.35"/>
+      <path d="M 1105,1514 A 32 32 0 0 0 1073,1540" stroke-width="0.6"/>
+      <path d="M 1105,1512 A 44 44 0 0 0 1061,1540" stroke-width="0.45"/>
+      <path d="M 1105,1512 A 58 58 0 0 0 1047,1540" stroke-width="0.35"/>
+      <!-- 상단 좌우 -->
+      <path d="M 120,220 A 36 36 0 0 1 156,184" stroke-width="0.5"/>
+      <path d="M 120,220 A 52 52 0 0 1 172,168" stroke-width="0.35"/>
+      <path d="M 1120,220 A 36 36 0 0 0 1084,184" stroke-width="0.5"/>
+      <path d="M 1120,220 A 52 52 0 0 0 1068,168" stroke-width="0.35"/>
+    </g>
+
+    <!-- 추가 bouton 점광원 (고밀도 산포) -->
+    <g>
+      <circle cx="260" cy="260" r="2" fill="url(#bouton)" opacity="0.58"/>
+      <circle cx="340" cy="210" r="1.7" fill="url(#bouton)" opacity="0.48"/>
+      <circle cx="500" cy="250" r="2.1" fill="url(#bouton)" opacity="0.54"/>
+      <circle cx="740" cy="220" r="1.8" fill="url(#bouton)" opacity="0.5"/>
+      <circle cx="830" cy="258" r="2.3" fill="url(#bouton)" opacity="0.58"/>
+      <circle cx="980" cy="200" r="1.9" fill="url(#bouton)" opacity="0.52"/>
+      <circle cx="1160" cy="250" r="1.8" fill="url(#bouton)" opacity="0.5"/>
+      <circle cx="70" cy="360" r="2.1" fill="url(#bouton)" opacity="0.55"/>
+      <circle cx="1170" cy="460" r="2" fill="url(#bouton)" opacity="0.5"/>
+      <circle cx="40" cy="620" r="2.2" fill="url(#bouton)" opacity="0.55"/>
+      <circle cx="1200" cy="740" r="1.9" fill="url(#bouton)" opacity="0.5"/>
+      <circle cx="38" cy="980" r="2.1" fill="url(#bouton)" opacity="0.55"/>
+      <circle cx="1198" cy="1100" r="2" fill="url(#bouton)" opacity="0.5"/>
+      <circle cx="50" cy="1300" r="2.3" fill="url(#bouton)" opacity="0.55"/>
+      <circle cx="1188" cy="1380" r="2" fill="url(#bouton)" opacity="0.5"/>
+      <circle cx="380" cy="1620" r="1.9" fill="url(#bouton)" opacity="0.5"/>
+      <circle cx="640" cy="1638" r="2.2" fill="url(#bouton)" opacity="0.55"/>
+      <circle cx="880" cy="1608" r="2" fill="url(#bouton)" opacity="0.5"/>
+      <circle cx="620" cy="320" r="2.2" fill="url(#bouton)" opacity="0.58"/>
+      <circle cx="618" cy="800" r="2" fill="url(#bouton)" opacity="0.5"/>
+      <circle cx="620" cy="1200" r="2" fill="url(#bouton)" opacity="0.5"/>
+      <circle cx="26" cy="420" r="1.7" fill="url(#bouton)" opacity="0.45"/>
+      <circle cx="1228" cy="420" r="1.7" fill="url(#bouton)" opacity="0.45"/>
+      <circle cx="30" cy="820" r="1.7" fill="url(#bouton)" opacity="0.45"/>
+      <circle cx="1226" cy="820" r="1.7" fill="url(#bouton)" opacity="0.45"/>
+      <circle cx="614" cy="540" r="1.7" fill="url(#bouton)" opacity="0.45"/>
+      <circle cx="620" cy="1040" r="1.7" fill="url(#bouton)" opacity="0.45"/>
+    </g>
+
+    <!-- 추가 파선 경로 (가는 뉴로필) -->
+    <g stroke="#C5D6F0" fill="none" stroke-width="0.35" opacity="0.1" stroke-dasharray="1 3" stroke-linecap="round">
+      <path d="M 40,160 Q 200,100 380,140 T 720,120 T 1060,160 T 1200,140"/>
+      <path d="M 60,1700 Q 220,1660 400,1690 T 740,1670 T 1060,1700 T 1200,1680"/>
+      <path d="M 140,500 Q 340,440 540,480 T 940,460 T 1180,500"/>
+      <path d="M 80,1020 Q 280,980 480,1020 T 880,1000 T 1180,1030"/>
+      <path d="M 160,1300 Q 340,1260 540,1300 T 900,1280 T 1180,1310"/>
+    </g>
+  </svg>
+
+  <!-- L-Brackets -->
+  <span class="lb tl"></span>
+  <span class="lb tr"></span>
+  <span class="lb bl"></span>
+  <span class="lb br"></span>
+
+  <!-- HEADER -->
+  <header class="hdr">
+    <div class="hdr-top">
+      <span>C-NAPSE · 2026</span>
+      <span>계명 CMF</span>
+    </div>
+    <h1 class="hdr-title">계명 CMF <em class="hdr-synapse"><span class="hdr-synapse-text">시냅스</span></em> 명단</h1>
+    <p class="hdr-sub">
+      <span class="en">— a constellation of fifty-seven, bound in spirit and synapse.</span>
+    </p>
+    <div class="hdr-meta">
+      <div>57 MEMBERS</div>
+      <div>17 GROUPS</div>
+      <div>SPRING · 2026</div>
+    </div>
+  </header>
+
+  <div class="divider"></div>
+
+  <!-- GRID -->
+  <section class="grid" id="grid"></section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="left">
+      계명대학교 의과대학 · 간호대학<br>
+      기독교 동아리 CMF · C-NAPSE 2026
+    </div>
+    <div class="right">
+      <span class="star">✦</span> KEIMYUNG · SPRING 2026<br>
+      PRINTED FOR THE ROOM OF THE FIFTY-SEVEN
+    </div>
+  </footer>
+
+</div>
+</div>
+
+<script>
+/* ============================ DATA ============================ */
+const BASE = "https://raw.githubusercontent.com/JonathanBlackDoctor/cmf-synapse-2026/main/";
+const U = {
+  "01_rod.png":"1.%20간상세포.png",
+  "02_cone.png":"2.%20원추세포.png",
+  "03_retinal_bipolar.png":"3.%20망막%20양극세포.png",
+  "04_horizontal.png":"4.%20수평세포.png",
+  "05_amacrine.png":"5.%20무축삭세포.png",
+  "06_retinal_ganglion.png":"6.%20망막%20신경절세포.png",
+  "07_olfactory_receptor.png":"7.%20후각수용뉴런.png",
+  "08_mitral.png":"8.%20승모세포.png",
+  "09_tufted.png":"9.%20솔방울세포%20.png",
+  "10_olfactory_granule.png":"10.%20후각구%20과립세포.png",
+  "11_inner_hair.png":"11.%20내유모세포.png",
+  "12_outer_hair.png":"12.%20외유모세포.png",
+  "13_merkel.png":"13.%20메르켈세포.png",
+  "14_pacinian.png":"14.%20파치니소체%20구심뉴런.png",
+  "15_meissner.png":"15.%20마이스너소체%20구심뉴런.png",
+  "16_ruffini.png":"16.%20루피니종말%20구심뉴런.png",
+  "17_muscle_spindle.png":"17.%20근방추%20Ia%20구심뉴런.png",
+  "18_golgi_tendon.png":"18.%20골지건기관%20Ib%20구심뉴런.png",
+  "19_free_nerve.png":"19.%20자유신경종말.png",
+  "20_drg.png":"20.%20후근신경절%20의사단극세포.png",
+  "21_purkinje.png":"21.%20푸르키네%20세포.png",
+  "22_cerebellar_granule.png":"22.%20소뇌%20과립세포.png",
+  "23_climbing_fiber.png":"23.%20등반섬유%20뉴런.png",
+  "24_mossy_fiber.png":"24.%20이끼섬유%20뉴런.png",
+  "25_cerebellar_basket.png":"25.%20소뇌%20바구니세포.png",
+  "26_cerebellar_stellate.png":"26.%20소뇌%20별세포.png",
+  "27_golgi_cell.png":"27.%20골지%20세포.png",
+  "28_lugaro.png":"28.%20루가로%20세포.png",
+  "29_unipolar_brush.png":"29.%20단극솔세포.png",
+  "30_pyramidal.png":"30.%20피라미드%20세포.png",
+  "31_betz.png":"31.%20베츠%20세포.png",
+  "32_von_economo.png":"32.%20방추상%20뉴런%20%20폰%20에코노모%20뉴런.png",
+  "33_chandelier.png":"33.%20샹들리에%20세포.png",
+  "34_cortical_basket.png":"34.%20피질%20바구니세포.png",
+  "35_double_bouquet.png":"35.%20더블부케%20세포.png",
+  "36_martinotti.png":"36.%20마르티노티%20세포.png",
+  "37_cajal_retzius.png":"37.%20카할-레치우스%20세포.png",
+  "38_cortical_stellate.png":"38.%20피질%20성상세포.png",
+  "39_neurogliaform.png":"39.%20뉴로글리아폼%20세포.png",
+  "40_dentate_granule.png":"40.%20치아이랑%20과립세포.png",
+  "41_ca1_pyramidal.png":"41.%20CA1%20피라미드%20세포.png",
+  "42_ca3_pyramidal.png":"42.%20CA3%20피라미드%20세포.png",
+  "43_mossy_cell.png":"43.%20해마%20이끼세포.png",
+  "44_olm.png":"44.%20O-LM%20세포.png",
+  "45_medium_spiny.png":"45.%20중간가시뉴런.png",
+  "46_cholinergic.png":"46.%20선조체%20콜린성%20중간뉴런.png",
+  "47_dopaminergic.png":"47.%20도파민%20뉴런.png",
+  "48_locus_coeruleus.png":"48.%20청반핵%20뉴런.png",
+  "49_raphe.png":"49.%20솔기핵%20뉴런.png",
+  "50_thalamic_relay.png":"50.%20시상%20중계뉴런.png",
+  "51_thalamic_reticular.png":"51.%20시상%20망상핵%20뉴런.png",
+  "52_magnocellular.png":"52.%20거대세포%20신경분비뉴런.png",
+  "53_alpha_motor.png":"53.%20알파%20운동뉴런.png",
+  "54_gamma_motor.png":"54.%20감마%20운동뉴런.png",
+  "55_renshaw.png":"55.%20렌쇼%20세포.png",
+  "56_mauthner.png":"56.%20마우트너%20세포.png",
+  "57_sympathetic.png":"57.%20교감신경절%20뉴런.png",
+  "58_parasympathetic.png":"58.%20부교감신경절%20뉴런.png",
+  "59_dogiel_i.png":"59.%20도기엘%20I형%20세포.png",
+  "60_dogiel_ii.png":"60.%20도기엘%20II형%20세포.png"
+};
+const url = (k)=> BASE + U[k];
+
+const GROUPS = [
+ {g:"G.01", sr:{n:"김예은", grade:"간4", en:"Horizontal Cell", f:"04_horizontal.png"},
+   jr:[{n:"김유진", en:"Rod Cell", f:"01_rod.png"},
+       {n:"손지모", en:"Cone Cell", f:"02_cone.png"},
+       {n:"안혜솔", en:"Retinal Ganglion Cell", f:"06_retinal_ganglion.png"}]},
+ {g:"G.02", sr:{n:"이은수", grade:"간3", en:"Olfactory Receptor Neuron", f:"07_olfactory_receptor.png"},
+   jr:[{n:"주현우", en:"Mitral Cell", f:"08_mitral.png"},
+       {n:"김채윤", en:"Tufted Cell", f:"09_tufted.png"},
+       {n:"권예준", en:"Outer Hair Cell", f:"12_outer_hair.png"}]},
+ {g:"G.03", sr:{n:"이근우", grade:"간2", en:"Golgi Cell", f:"27_golgi_cell.png"},
+   jr:[{n:"김민서", en:"Merkel Cell", f:"13_merkel.png"},
+       {n:"박규은", en:"Pacinian Corpuscle Aff.", f:"14_pacinian.png"},
+       {n:"신예원", en:"Meissner Corpuscle Aff.", f:"15_meissner.png"},
+       {n:"서지나", en:"Ruffini Ending Aff.", f:"16_ruffini.png"}]},
+ {g:"G.04", sr:{n:"변은성", grade:"간2", en:"Climbing Fiber", f:"23_climbing_fiber.png"},
+   jr:[{n:"김예경", en:"Muscle Spindle Ia Aff.", f:"17_muscle_spindle.png"},
+       {n:"이연수", en:"Golgi Tendon Ib Aff.", f:"18_golgi_tendon.png"},
+       {n:"장현영", en:"Free Nerve Ending", f:"19_free_nerve.png"}]},
+ {g:"G.05", sr:{n:"박동빈", grade:"본4", en:"Cortical Spiny Stellate", f:"38_cortical_stellate.png"},
+   jr:[{n:"강민서", en:"Pyramidal Cell", f:"30_pyramidal.png"},
+       {n:"최은수", en:"Betz Cell", f:"31_betz.png"}]},
+ {g:"G.06", sr:{n:"김지현", grade:"본4", en:"Purkinje Cell", f:"21_purkinje.png"},
+   jr:[{n:"노시현", en:"Von Economo Neuron", f:"32_von_economo.png"}]},
+ {g:"G.07", sr:{n:"채성준", grade:"본3", en:"Cerebellar Basket Cell", f:"25_cerebellar_basket.png"},
+   jr:[{n:"백도영", en:"Chandelier Cell", f:"33_chandelier.png"},
+       {n:"박동위", en:"Cortical Basket Cell", f:"34_cortical_basket.png"},
+       {n:"박한주", en:"Double Bouquet Cell", f:"35_double_bouquet.png"}]},
+ {g:"G.08", sr:{n:"안수민", grade:"본2", en:"Cerebellar Stellate Cell", f:"26_cerebellar_stellate.png"},
+   jr:[{n:"오준혁", en:"Martinotti Cell", f:"36_martinotti.png"},
+       {n:"박우진", en:"Cajal-Retzius Cell", f:"37_cajal_retzius.png"},
+       {n:"변선우", en:"Neurogliaform Cell", f:"39_neurogliaform.png"}]},
+ {g:"G.09", sr:{n:"정욱", grade:"본1", en:"O-LM Cell", f:"44_olm.png"},
+   jr:[{n:"유창현", en:"CA1 Pyramidal Cell", f:"41_ca1_pyramidal.png"},
+       {n:"허민", en:"CA3 Pyramidal Cell", f:"42_ca3_pyramidal.png"}]},
+ {g:"G.10", sr:{n:"조나단", grade:"본1", en:"Unipolar Brush Cell", f:"29_unipolar_brush.png"},
+   jr:[{n:"민진우", en:"Dentate Granule Cell", f:"40_dentate_granule.png"},
+       {n:"김민결", en:"Hippocampal Mossy Cell", f:"43_mossy_cell.png"}]},
+ {g:"G.11", sr:{n:"이채윤", grade:"본1", en:"Lugaro Cell", f:"28_lugaro.png"},
+   jr:[{n:"윤홍현", en:"Medium Spiny Neuron", f:"45_medium_spiny.png"},
+       {n:"전소윤", en:"Striatal Cholinergic Int.", f:"46_cholinergic.png"}]},
+ {g:"G.12", sr:{n:"이예진", grade:"본1", en:"Mossy Fiber", f:"24_mossy_fiber.png"},
+   jr:[{n:"정은아", en:"Dopaminergic Neuron", f:"47_dopaminergic.png"},
+       {n:"김민결", en:"Locus Coeruleus Neuron", f:"48_locus_coeruleus.png"}]},
+ {g:"G.13", sr:{n:"이승은", grade:"본1", en:"Cerebellar Granule Cell", f:"22_cerebellar_granule.png"},
+   jr:[{n:"고은별", en:"Raphe Nucleus Neuron", f:"49_raphe.png"},
+       {n:"강예은", en:"Thalamocortical Relay N.", f:"50_thalamic_relay.png"}]},
+ {g:"G.14", sr:{n:"이지현", grade:"본1", en:"Amacrine Cell", f:"05_amacrine.png"},
+   jr:[{n:"김도연", en:"Thalamic Reticular N.", f:"51_thalamic_reticular.png"},
+       {n:"김수한", en:"Magnocellular Neurosec.", f:"52_magnocellular.png"}]},
+ {g:"G.15", sr:{n:"안병욱", grade:"예2", en:"Mauthner Cell", f:"56_mauthner.png"},
+   jr:[{n:"이은수", en:"Alpha Motor Neuron", f:"53_alpha_motor.png"},
+       {n:"이상용", en:"Gamma Motor Neuron", f:"54_gamma_motor.png"}]},
+ {g:"G.16", sr:{n:"이민준", grade:"예2", en:"Inner Hair Cell", f:"11_inner_hair.png"},
+   jr:[{n:"조현호", en:"Renshaw Cell", f:"55_renshaw.png"},
+       {n:"신원규", en:"DRG Pseudounipolar N.", f:"20_drg.png"}]},
+ {g:"G.17", sr:{n:"배주현", grade:"예2", en:"Dogiel Type II Cell", f:"60_dogiel_ii.png"},
+   jr:[{n:"이주하", en:"Sympathetic Ganglion N.", f:"57_sympathetic.png"},
+       {n:"손보경", en:"Parasympathetic Gang. N.", f:"58_parasympathetic.png"}]}
+];
+
+/* ============================ CONNECTOR SVG ============================ */
+let _connUid = 0;
+function connectorSVG(jrCount, slotIdx){
+  const vbW = 110, vbH = 108;
+  // 깊은 침투: 선배 뉴런 중앙부까지 / 후배 뉴런 내부로
+  const axonX = -44;       // 선배 뉴런 속 ~33px 파고듦
+  const dendX = vbW + 16;  // 후배 뉴런 속 ~16px 파고듦
+  const startY = 39;
+  _connUid++;
+  const gid = `gb_${_connUid}`;
+  const sid = `sg_${_connUid}`;
+  const mid = `md_${_connUid}`;
+  const hid = `hl_${_connUid}`;
+
+  let ys = [];
+  if (jrCount === 1) ys = [54];
+  else if (jrCount === 2) ys = [31, 77];
+  else if (jrCount === 3) ys = [15, 54, 93];
+  else ys = [9, 37, 71, 99];
+
+  const rand = (seed)=> ((Math.sin(seed * 12.9898) * 43758.5453) % 1 + 1) % 1;
+
+  let paths = "", particles = "", glow = "", bouton = "", collaterals = "", arbor = "";
+
+  ys.forEach((y, jrIdx)=>{
+    const s = (slotIdx||0) * 7.31 + jrIdx * 3.17 + 1.9;
+    const vx1 = rand(s);
+    const vx2 = rand(s + 0.71);
+    const vy1 = rand(s + 1.37);
+    const vy2 = rand(s + 2.19);
+    const vDash = rand(s + 3.05);
+    const vCol = rand(s + 4.13);
+
+    const dy = y - startY;
+    const absdy = Math.abs(dy);
+    const sign = Math.sign(dy) || (vy1 > 0.5 ? 1 : -1);
+
+    let cp1y, cp2y;
+    if (absdy < 5){
+      const sDrift = (vy1 - 0.5) * 22;
+      cp1y = startY + sDrift;
+      cp2y = y - sDrift * 0.8;
+    } else {
+      const boostBase = Math.min(absdy * 0.8 + 10, 48);
+      const boostVar = 0.8 + vy1 * 0.7;
+      const boost1 = sign * boostBase * boostVar;
+      const boost2 = sign * boostBase * (0.25 + vy2 * 0.35);
+      cp1y = startY + boost1;
+      cp2y = y + boost2;
+    }
+    const cp1x = 4 + vx1 * 24;         // -40에서 출발하므로 초기 cp 당김
+    const cp2x = 80 + vx2 * 22;
+
+    const P0 = [axonX, startY];
+    const P1 = [cp1x, cp1y];
+    const P2 = [cp2x, cp2y];
+    const P3 = [dendX, y];
+
+    const d = `M ${P0[0]},${P0[1]} C ${P1[0].toFixed(1)},${P1[1].toFixed(1)} ${P2[0].toFixed(1)},${P2[1].toFixed(1)} ${P3[0]},${P3[1].toFixed(1)}`;
+
+    // 4중 글로우 (와이드 halo → 좁은 core)
+    glow += `<path d="${d}" stroke="#7FB2E8" stroke-width="7" opacity="0.08" fill="none" filter="url(#${hid})" stroke-linecap="round"/>`;
+    glow += `<path d="${d}" stroke="#A5C4F0" stroke-width="3.8" opacity="0.15" fill="none" filter="url(#${gid})" stroke-linecap="round"/>`;
+    glow += `<path d="${d}" stroke="#C5D6F0" stroke-width="1.9" opacity="0.3" fill="none" filter="url(#${mid})" stroke-linecap="round"/>`;
+
+    // 메인 라인 (dashed, 변주)
+    const dashPatterns = ["3 5", "2 4", "4 6", "3 4", "5 3 2 3", "2 3 5 3"];
+    const dashP = dashPatterns[Math.floor(vDash * dashPatterns.length)];
+    paths += `<path d="${d}" stroke="#EAF2FF" stroke-width="1.15" stroke-dasharray="${dashP}" opacity="0.9" fill="none" stroke-linecap="round"/>`;
+
+    // 간헐적 활동 전위 — 76% 휴지 → 22% 주행 → 2% 페이드
+    const apId     = `apPath_${_connUid}_${jrIdx}`;
+    const cycleDur = (4.0 + rand(s + 8.3) * 3.0).toFixed(2);  // 4.0–7.0s
+    const phase    = (-(rand(s + 9.7) * parseFloat(cycleDur))).toFixed(2);
+    const AS = '0.76', AP = '0.770', AE = '0.98';
+    paths += `<path id="${apId}" d="${d}" fill="none" stroke="none"/>`;
+    paths += `<path class="syn-shimmer" d="${d}" stroke="#EAF2FF" stroke-width="0.9" stroke-dasharray="6 74" stroke-linecap="round" fill="none" opacity="0" filter="url(#${mid})" style="--syn-dur:${cycleDur}s; --syn-delay:${phase}s"/>`;
+    particles += `<circle class="syn-pulse" r="2.2" fill="#EAF2FF" opacity="0" filter="url(#${mid})">
+      <animateMotion dur="${cycleDur}s" repeatCount="indefinite" begin="${phase}s" keyPoints="0;0;1" keyTimes="0;${AS};1" rotate="auto"><mpath href="#${apId}"/></animateMotion>
+      <animate attributeName="opacity" dur="${cycleDur}s" repeatCount="indefinite" begin="${phase}s" values="0;0;0.95;0.95;0" keyTimes="0;${AS};${AP};${AE};1"/>
+    </circle>`;
+    particles += `<circle class="syn-pulse-core" r="0.9" fill="#FFFFFF" opacity="0">
+      <animateMotion dur="${cycleDur}s" repeatCount="indefinite" begin="${phase}s" keyPoints="0;0;1" keyTimes="0;${AS};1"><mpath href="#${apId}"/></animateMotion>
+      <animate attributeName="opacity" dur="${cycleDur}s" repeatCount="indefinite" begin="${phase}s" values="0;0;1;1;0" keyTimes="0;${AS};${AP};${AE};1"/>
+    </circle>`;
+
+    // 베지어 위치/접선
+    const bz = (t) => {
+      const mt = 1 - t;
+      return [
+        mt*mt*mt*P0[0] + 3*mt*mt*t*P1[0] + 3*mt*t*t*P2[0] + t*t*t*P3[0],
+        mt*mt*mt*P0[1] + 3*mt*mt*t*P1[1] + 3*mt*t*t*P2[1] + t*t*t*P3[1]
+      ];
+    };
+    const bzTan = (t) => {
+      const mt = 1 - t;
+      return [
+        3*mt*mt*(P1[0]-P0[0]) + 6*mt*t*(P2[0]-P1[0]) + 3*t*t*(P3[0]-P2[0]),
+        3*mt*mt*(P1[1]-P0[1]) + 6*mt*t*(P2[1]-P1[1]) + 3*t*t*(P3[1]-P2[1])
+      ];
+    };
+
+    // 부측지 (axon collaterals) — 2~3개, 수직 분기
+    const collCount = 2 + (vCol > 0.5 ? 1 : 0);
+    const collTs = collCount === 3 ? [0.28, 0.52, 0.76] : [0.34, 0.68];
+    collTs.forEach((t, ci) => {
+      const [bx, by] = bz(t);
+      const [tx, ty] = bzTan(t);
+      const len = Math.hypot(tx, ty) || 1;
+      const nx = -ty/len, ny = tx/len;
+      const sideSeed = rand(s + 5.1 + ci * 0.37);
+      const side = sideSeed > 0.5 ? 1 : -1;
+      const reach = 6 + rand(s + 6.1 + ci * 0.41) * 10;
+      const curvy = rand(s + 7.1 + ci * 0.29) * 0.35 + 0.45;
+      const endX = bx + nx * reach * side + (tx/len) * reach * 0.3;
+      const endY = by + ny * reach * side + (ty/len) * reach * 0.3;
+      const ctlX = bx + nx * reach * curvy * side + (tx/len) * reach * 0.12;
+      const ctlY = by + ny * reach * curvy * side + (ty/len) * reach * 0.12;
+      const cd = `M ${bx.toFixed(1)},${by.toFixed(1)} Q ${ctlX.toFixed(1)},${ctlY.toFixed(1)} ${endX.toFixed(1)},${endY.toFixed(1)}`;
+      collaterals += `<path d="${cd}" stroke="#A5C4F0" stroke-width="1.7" opacity="0.16" fill="none" filter="url(#${mid})" stroke-linecap="round"/>`;
+      collaterals += `<path d="${cd}" stroke="#C5D6F0" stroke-width="0.55" opacity="0.62" fill="none" stroke-linecap="round"/>`;
+      collaterals += `<circle cx="${endX.toFixed(1)}" cy="${endY.toFixed(1)}" r="1.9" fill="#7FB2E8" opacity="0.22" filter="url(#${mid})"/>`;
+      collaterals += `<circle cx="${endX.toFixed(1)}" cy="${endY.toFixed(1)}" r="0.85" fill="#EAF2FF" opacity="0.88"/>`;
+    });
+
+    // 경로 위 mini-bouton (varicosity)
+    [0.16, 0.38, 0.6, 0.84].forEach((t, ti)=>{
+      const [x_t, y_t] = bz(t);
+      const r  = (ti === 1 || ti === 2) ? 1.35 : 0.9;
+      const op = (ti === 1 || ti === 2) ? 0.95 : 0.72;
+      if (ti === 1 || ti === 2){
+        particles += `<circle cx="${x_t.toFixed(1)}" cy="${y_t.toFixed(1)}" r="2.6" fill="#7FB2E8" opacity="0.18" filter="url(#${gid})"/>`;
+      }
+      particles += `<circle cx="${x_t.toFixed(1)}" cy="${y_t.toFixed(1)}" r="${r}" fill="#C5D6F0" opacity="${op}"/>`;
+    });
+
+    // 축삭 시작부 bouton (선배 뉴런 속 깊이)
+    bouton += `<circle cx="${(axonX + 8).toFixed(1)}" cy="${startY.toFixed(1)}" r="3.8" fill="#7FB2E8" opacity="0.28" filter="url(#${gid})"/>`;
+    bouton += `<circle cx="${(axonX + 8).toFixed(1)}" cy="${startY.toFixed(1)}" r="1.9" fill="#A5C4F0" opacity="0.7"/>`;
+    bouton += `<circle cx="${(axonX + 8).toFixed(1)}" cy="${startY.toFixed(1)}" r="0.9" fill="#EAF2FF" opacity="0.95"/>`;
+
+    // 말단 수상돌기 arbor — 3 잎 splay
+    [[-6.5, 0.9, -3], [0, 1.0, 0], [6.5, 0.9, 3]].forEach(([dyOff, strength, curveOff]) => {
+      const tipX = dendX + 9;
+      const tipY = y + dyOff;
+      const ctl1X = dendX - 1 + curveOff * 0.3;
+      const ctl1Y = y + dyOff * 0.4;
+      const ad = `M ${dendX.toFixed(1)},${y.toFixed(1)} Q ${ctl1X.toFixed(1)},${ctl1Y.toFixed(1)} ${tipX.toFixed(1)},${tipY.toFixed(1)}`;
+      arbor += `<path d="${ad}" stroke="#7FB2E8" stroke-width="${1.6 * strength}" opacity="0.15" fill="none" filter="url(#${mid})" stroke-linecap="round"/>`;
+      arbor += `<path d="${ad}" stroke="#C5D6F0" stroke-width="${0.6 * strength}" opacity="${0.7 * strength}" fill="none" stroke-linecap="round"/>`;
+      arbor += `<circle cx="${tipX.toFixed(1)}" cy="${tipY.toFixed(1)}" r="${0.8 * strength}" fill="#EAF2FF" opacity="${0.88 * strength}"/>`;
+    });
+
+    // 시냅스 주착지 (원래 landing)
+    particles += `<circle cx="${(dendX - 2).toFixed(1)}" cy="${y.toFixed(1)}" r="3.4" fill="#EAF2FF" opacity="0.96" filter="url(#${sid})"/>`;
+    particles += `<circle cx="${(dendX - 2).toFixed(1)}" cy="${y.toFixed(1)}" r="1.4" fill="#C5D6F0" opacity="1"/>`;
+  });
+
+  return `
+    <svg viewBox="0 0 ${vbW} ${vbH}" preserveAspectRatio="none">
+      <defs>
+        <filter id="${hid}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3.6"/></filter>
+        <filter id="${gid}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2"/></filter>
+        <filter id="${mid}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.1"/></filter>
+        <filter id="${sid}" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="1.8"/></filter>
+      </defs>
+      ${glow}${collaterals}${paths}${arbor}${bouton}${particles}
+    </svg>`;
+}
+
+/* ============================ RENDER ============================ */
+function renderGrid(){
+  const grid = document.getElementById('grid');
+  let html = "";
+  GROUPS.forEach((G, slotIdx)=>{
+    html += `
+    <div class="slot" data-jrc="${G.jr.length}">
+      <span class="gnum">${G.g}</span>
+      <div class="sr">
+        <div class="sr-neuron-wrap">
+          <img class="sr-neuron-img" loading="lazy" src="${url(G.sr.f)}" alt="">
+          <div class="sr-name">${G.sr.n}</div>
+        </div>
+        <div class="sr-text">
+          <div class="sr-en">${G.sr.en}</div>
+        </div>
+      </div>
+      <div class="conn">${connectorSVG(G.jr.length, slotIdx)}</div>
+      <div class="jr">
+        ${G.jr.map(j=>`
+          <div class="jr-row">
+            <div class="jr-neuron-wrap"><img class="jr-neuron-img" loading="lazy" src="${url(j.f)}" alt=""></div>
+            <div class="jr-text">
+              <span class="jr-name">${j.n}</span>
+              <span class="jr-en">${j.en}</span>
+            </div>
+          </div>`).join("")}
+      </div>
+    </div>`;
+  });
+  // 18th — 장식 뉴런 슬롯 (후각구 과립세포, 10번)
+  html += `
+    <div class="mark-slot">
+      <div class="mark-neuron-wrap">
+        <img class="mark-neuron-img" loading="lazy" src="${url("10_olfactory_granule.png")}" alt="">
+      </div>
+      <div class="mark-label">
+        <span class="star">✦</span> C-NAPSE · 2026 <span class="star">✦</span>
+      </div>
+    </div>`;
+  grid.innerHTML = html;
+}
+
+renderGrid();
+
+/* Inject complex neural background into .poster (behind constellation) */
+window.__NEURAL_BG_PARENT = '#poster';
+(function loadNeuralBg(){
+  const s = document.createElement('script');
+  s.src = '../neural-bg.js';
+  document.body.appendChild(s);
+})();
+
+/* ============================ RENDER MODE (headless screenshot) ============================ */
+const IS_RENDER_MODE = /[?&]render=1\b/.test(location.search);
+if (IS_RENDER_MODE) {
+  document.documentElement.classList.add('render-mode');
+}
+
+/* ============================ FIT TO VIEWPORT ============================ */
+function fit(){
+  if (IS_RENDER_MODE) return;
+  const stage = document.getElementById('stage');
+  const vw = window.innerWidth;
+  if (vw < 1300){
+    const s = Math.min(1, (vw - 40) / 1240);
+    stage.style.setProperty('--fit', s.toFixed(3));
+    stage.style.height = (1754 * s) + "px";
+  } else {
+    stage.style.removeProperty('--fit');
+    stage.style.transform = "none";
+    stage.style.height = "1754px";
+  }
+}
+window.addEventListener('resize', fit); fit();
+
+/* ============================ DOWNLOAD ============================ */
+/*
+  이 포스터(1240×1754 최대 5.66x = 7016×9921)는 두 가지 브라우저 제약으로
+  인해 클라이언트 사이드 DOM→PNG 렌더링이 불가능하다:
+
+  1. html-to-image / modern-screenshot 는 내부적으로 encodeURIComponent(SVG)
+     를 호출하는데, 이 포스터의 foreignObject SVG 길이가 481 MB에 달해 V8
+     문자열 상한(~512 MB)을 초과한다.
+  2. Blob URL로 우회해도 foreignObject 안에 외부 리소스가 있어 canvas가
+     taint되고 toBlob()이 SecurityError를 낸다.
+
+  게다가 file:// 환경에서는 fetch()/XHR로 같은 폴더의 PNG를 읽는 것도
+  CORS 정책에 의해 차단되고, `<a href="local.png" download>` 직접 클릭도
+  동작하지 않는다 (Chrome은 cross-origin 링크에서 download 속성을 무시).
+
+  해결책: Puppeteer로 사전 렌더링한 PNG를 base64로 인코딩해 별도 JS 파일로
+  제공한다. `<script src>`는 file:// 간에도 CORS 없이 로드 가능하며, data:
+  URL의 download 속성은 origin과 무관하게 항상 작동한다. 버튼 클릭 시
+  필요한 에셋만 동적으로 로드(지연 로딩)하여 초기 페이지 로드는 가볍게
+  유지한다.
+*/
+const DL_ASSETS = {
+  preview: { src: 'dl-assets/dl-preview.b64.js', name: 'CMF-Synapse-2026_preview_1240x1754.png', sizeMB: 1.76 },
+  dpi300:  { src: 'dl-assets/dl-dpi300.b64.js',  name: 'CMF-Synapse-2026_A3_300dpi.png',         sizeMB: 10.16 },
+  dpi600:  { src: 'dl-assets/dl-dpi600.b64.js',  name: 'CMF-Synapse-2026_600dpi_A3.png',         sizeMB: 31.67 }
+};
+
+function loadDlAsset(key){
+  const cfg = DL_ASSETS[key];
+  const globalKey = '__dlAsset_' + key;
+  if (window[globalKey]) return Promise.resolve(window[globalKey]);
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.onload = () => {
+      if (window[globalKey]) resolve(window[globalKey]);
+      else reject(new Error('에셋 파일은 로드되었지만 데이터가 비어있습니다.'));
+    };
+    s.onerror = () => reject(new Error(
+      `"${cfg.src}" 파일을 찾을 수 없습니다.\n\n` +
+      "이 포스터는 고해상도 PNG를 사전 렌더링 방식으로 제공합니다.\n" +
+      "HTML과 같은 폴더에 'dl-assets/' 서브폴더와 다음 파일들이 필요합니다:\n\n" +
+      "  • dl-assets/dl-preview.b64.js   (약 2 MB)\n" +
+      "  • dl-assets/dl-dpi300.b64.js    (약 14 MB)\n" +
+      "  • dl-assets/dl-dpi600.b64.js    (약 42 MB)"
+    ));
+    s.src = cfg.src + '?_t=' + Date.now();
+    document.head.appendChild(s);
+  });
+}
+
+async function downloadAsset(key, btn){
+  const cfg = DL_ASSETS[key];
+  const prevText = btn.textContent;
+  btn.disabled = true;
+  try {
+    btn.textContent = `에셋 로딩… (${cfg.sizeMB.toFixed(1)} MB)`;
+    const dataUrl = await loadDlAsset(key);
+
+    btn.textContent = '다운로드 시작…';
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = cfg.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    btn.textContent = '✓ 저장';
+    setTimeout(() => { btn.textContent = prevText; btn.disabled = false; }, 1800);
+  } catch (e) {
+    console.error('다운로드 에러:', e);
+    alert('다운로드 실패:\n\n' + (e.message || e));
+    btn.textContent = prevText;
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('dl-prev').addEventListener('click', e => downloadAsset('preview', e.currentTarget));
+document.getElementById('dl-300') .addEventListener('click', e => downloadAsset('dpi300',  e.currentTarget));
+document.getElementById('dl-600') .addEventListener('click', e => downloadAsset('dpi600',  e.currentTarget));
+document.getElementById('dl-print').addEventListener('click', () => window.print());
+</script>
+</body>
+</html>
