@@ -106,9 +106,13 @@
   //   cycle length (idle gap between pulses), size, intensity, mid-extinction.
   // Every axon gets 2-3 signals at different offsets → many overlapping bursts.
 
+  // Mobile sees fewer signals (perf). Threshold matches the CSS @media (max-width: 768px).
+  const isMobile = (typeof window !== 'undefined') && window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+
   const SIGNALS = [];
   AXON_PATHS.forEach((_, axIdx) => {
-    const bursts = 2 + (rng() < 0.55 ? 1 : 0);   // 2 or 3 signals per axon
+    let bursts = 2 + (rng() < 0.55 ? 1 : 0);   // 2 or 3 signals per axon
+    if (isMobile) bursts = Math.max(1, Math.ceil(bursts / 2)); // halve on mobile
     for (let b = 0; b < bursts; b++) {
       const speedTier = rng();
       const travel = speedTier < 0.30 ? rr(1.2, 2.0)     // fast
@@ -122,17 +126,15 @@
       const reverse = rng() < 0.32;
       const fadeMid = rng() < 0.22;
       const midFrac = aStart + (1 - aStart) * rr(0.40, 0.70);
+      const midFracPlus = Math.min(midFrac + 0.008, 0.99);
       const intensity = rr(0.80, 1.0);                   // brighter baseline
       const size = rr(2.6, 5.0);                         // larger dots
       SIGNALS.push({
-        axIdx, dur: total.toFixed(2), begin: (-beginOff).toFixed(2),
-        aStart: aStart.toFixed(3),
-        aStartPlus: aStartPlus.toFixed(3),
+        axIdx, dur: total, beginOff,
+        aStart, aStartPlus,
         reverse, fadeMid,
-        midFrac: midFrac.toFixed(3),
-        midFracPlus: Math.min(midFrac + 0.008, 0.99).toFixed(3),
-        intensity: intensity.toFixed(2),
-        size: size.toFixed(2),
+        midFrac, midFracPlus,
+        intensity, size,
       });
     }
   });
@@ -175,23 +177,11 @@
     `<circle cx="${x}" cy="${y}" r="${r}" fill="url(#nbBouton)" opacity="${o.toFixed(2)}"/>`
   ).join('');
 
-  const signalSVG = SIGNALS.map(s => {
-    const kP = s.reverse ? '1;1;0' : '0;0;1';
-    const kT = `0;${s.aStart};1`;
-    const opV = s.fadeMid
-      ? `0;0;${s.intensity};${s.intensity};0;0`
-      : `0;0;${s.intensity};${s.intensity};0`;
-    const opT = s.fadeMid
-      ? `0;${s.aStart};${s.aStartPlus};${s.midFrac};${s.midFracPlus};1`
-      : `0;${s.aStart};${s.aStartPlus};0.985;1`;
-    return `<circle class="nb-sig" r="${s.size}" fill="#EAF2FF" filter="url(#nbDot)" opacity="0">
-      <animateMotion dur="${s.dur}s" repeatCount="indefinite" begin="${s.begin}s"
-                     keyPoints="${kP}" keyTimes="${kT}" rotate="auto">
-        <mpath href="#nb-ax-${s.axIdx}"/>
-      </animateMotion>
-      <animate attributeName="opacity" dur="${s.dur}s" repeatCount="indefinite" begin="${s.begin}s"
-               values="${opV}" keyTimes="${opT}"/>
-    </circle>`;
+  // SMIL removed — circles now driven by WAAPI in animateSignals().
+  // We emit one circle per signal with data-* attributes carrying the timing parameters
+  // and offset-path string. The path data lives on AXON_PATHS so we read it from the array.
+  const signalSVG = SIGNALS.map((s, i) => {
+    return `<circle class="nb-sig" data-sig="${i}" r="${s.size.toFixed(2)}" fill="#EAF2FF" filter="url(#nbDot)" opacity="0"/>`;
   }).join('');
 
   const html = `
@@ -244,13 +234,74 @@
   </g>
 </svg>`;
 
+  // Per-signal WAAPI keyframes — each signal travels along its axon path via offset-path.
+  // The keyframe percentages encode the SMIL keyTimes faithfully (idle→travel→fade window).
+  function animateSignals(svg) {
+    if (typeof svg.animate !== 'function') return; // no WAAPI; signals stay invisible
+    const supportsOffsetPath = (typeof CSS !== 'undefined') && CSS.supports && CSS.supports('offset-path: path("M0 0 L1 1")');
+    if (!supportsOffsetPath) return; // graceful fallback: pulses simply hidden
+    const sigs = svg.querySelectorAll('.nb-sig');
+    sigs.forEach((el) => {
+      const i = parseInt(el.dataset.sig, 10);
+      const s = SIGNALS[i];
+      if (!s) return;
+      const pathD = AXON_PATHS[s.axIdx];
+      el.style.offsetPath = `path('${pathD}')`;
+      el.style.offsetRotate = 'auto';
+      const off0 = s.reverse ? '100%' : '0%';
+      const off1 = s.reverse ? '0%' : '100%';
+      // keyframes (offsetDistance, opacity)
+      // idle [0..aStart] → at start, opacity 0
+      // active [aStartPlus..(midFrac or 0.985)] → travel + visible
+      // (optional) midFade [midFrac..midFracPlus] → drop opacity to 0 mid-flight
+      // tail [..1] → at end, opacity 0
+      let kf;
+      if (s.fadeMid) {
+        kf = [
+          { offsetDistance: off0, opacity: 0,            offset: 0 },
+          { offsetDistance: off0, opacity: 0,            offset: s.aStart },
+          { offsetDistance: off0, opacity: s.intensity,  offset: s.aStartPlus },
+          { offsetDistance: lerpPct(off0, off1, (s.midFrac - s.aStartPlus) / (1 - s.aStartPlus)),
+            opacity: s.intensity, offset: s.midFrac },
+          { offsetDistance: lerpPct(off0, off1, (s.midFracPlus - s.aStartPlus) / (1 - s.aStartPlus)),
+            opacity: 0,           offset: s.midFracPlus },
+          { offsetDistance: off1, opacity: 0,            offset: 1 },
+        ];
+      } else {
+        kf = [
+          { offsetDistance: off0, opacity: 0,            offset: 0 },
+          { offsetDistance: off0, opacity: 0,            offset: s.aStart },
+          { offsetDistance: off0, opacity: s.intensity,  offset: s.aStartPlus },
+          { offsetDistance: off1, opacity: s.intensity,  offset: 0.985 },
+          { offsetDistance: off1, opacity: 0,            offset: 1 },
+        ];
+      }
+      el.animate(kf, {
+        duration: s.dur * 1000,
+        delay: -s.beginOff * 1000,
+        iterations: Infinity,
+        easing: 'linear',
+        composite: 'replace',
+      });
+    });
+  }
+  function lerpPct(a, b, t) {
+    const av = parseFloat(a), bv = parseFloat(b);
+    return (av + (bv - av) * Math.max(0, Math.min(1, t))).toFixed(2) + '%';
+  }
+
   function inject() {
     if (document.getElementById('neural-bg')) return;
     const wrap = document.createElement('div');
     wrap.innerHTML = html;
     const parentSel = window.__NEURAL_BG_PARENT;
     const parent = (parentSel && document.querySelector(parentSel)) || document.body;
-    parent.insertBefore(wrap.firstElementChild, parent.firstChild);
+    const svg = wrap.firstElementChild;
+    parent.insertBefore(svg, parent.firstChild);
+    // Honor reduced-motion + render-mode: skip starting WAAPI animations.
+    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const renderMode = document.documentElement.classList.contains('render-mode');
+    if (!reduced && !renderMode) animateSignals(svg);
   }
 
   if (document.readyState === 'loading') {

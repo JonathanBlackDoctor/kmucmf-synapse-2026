@@ -104,43 +104,29 @@
     const midWidth  = isHigh ? 3.4 : 3;
 
     // ── Intermittent action-potential ──
+    // CSS-driven now (offset-path) — SMIL removed for iOS Safari/iframe stability.
     // Cycle = 4.0–7.0s total per synapse; ~76% idle, ~22% active travel, 2% fade.
-    // Random phase offset (negative begin) so 200+ pulses don't align.
+    // Random phase offset (negative delay) so 200+ pulses don't align.
     const cycleDur    = 4.0 + sr(key, 'cycle') * 3.0;
     const phaseOffset = sr(key, 'phase') * cycleDur;
-    const pathId      = `synPath-${key}`;
     const cdStr       = cycleDur.toFixed(2);
     const beginStr    = (-phaseOffset).toFixed(2);
-    const AS = 0.76;               // active start fraction (idle→travel)
-    const AP = (AS + 0.01).toFixed(3);   // fade-in plateau
-    const AE = 0.98;               // fade-out end
 
     const shimmerLayer = `
       <path class="syn-shimmer" d="${d}" stroke="#EAF2FF" stroke-width="1.1"
             stroke-dasharray="8 72" stroke-linecap="round" fill="none"
             filter="url(#dot-${key})" opacity="0"
             style="--syn-dur:${cdStr}s; --syn-delay:${beginStr}s"/>`;
+    // Pulses ride the same bezier via CSS offset-path.
+    // The path coords match `d` exactly; SVG userspace transforms apply equally to both.
+    const pulseStyle = `offset-path:path('${d}');--syn-dur:${cdStr}s;--syn-delay:${beginStr}s`;
     const pulseLayer = `
-      <circle class="syn-pulse" r="3.2" fill="#EAF2FF" filter="url(#dot-${key})" opacity="0">
-        <animateMotion dur="${cdStr}s" repeatCount="indefinite" begin="${beginStr}s"
-                       keyPoints="0;0;1" keyTimes="0;${AS};1" rotate="auto">
-          <mpath href="#${pathId}"/>
-        </animateMotion>
-        <animate attributeName="opacity" dur="${cdStr}s" repeatCount="indefinite" begin="${beginStr}s"
-                 values="0;0;0.95;0.95;0" keyTimes="0;${AS};${AP};${AE};1"/>
-      </circle>
-      <circle class="syn-pulse-core" r="1.3" fill="#FFFFFF" opacity="0">
-        <animateMotion dur="${cdStr}s" repeatCount="indefinite" begin="${beginStr}s"
-                       keyPoints="0;0;1" keyTimes="0;${AS};1">
-          <mpath href="#${pathId}"/>
-        </animateMotion>
-        <animate attributeName="opacity" dur="${cdStr}s" repeatCount="indefinite" begin="${beginStr}s"
-                 values="0;0;1;1;0" keyTimes="0;${AS};${AP};${AE};1"/>
-      </circle>`;
+      <circle class="syn-pulse" r="3.2" fill="#EAF2FF" filter="url(#dot-${key})" opacity="0"
+              style="${pulseStyle};offset-rotate:auto"/>
+      <circle class="syn-pulse-core" r="1.3" fill="#FFFFFF" opacity="0"
+              style="${pulseStyle}"/>`;
 
     return `
-      <!-- Hidden path: animateMotion reference target (no stroke, no fill) -->
-      <path id="${pathId}" d="${d}" fill="none" stroke="none"/>
       <!-- Layer 1: outer halo (blurred) -->
       <path d="${d}" stroke="#7FB2E8" stroke-width="${haloWidth}" fill="none" opacity="0.13" filter="url(#blurA-${key})" stroke-linecap="round"/>
       <!-- Layer 2: mid glow -->
@@ -310,6 +296,24 @@
     `;
   }
 
+  // ── Neuron description block (English, hover-expand) ──
+  // Number is parsed from the leading "NN_" of the image filename.
+  // Numbers without a description (3, 10, 12, 59) yield empty markup so no whitespace is reserved.
+  const DESCS = (window.__CNAPSE_DESC) || {};
+  function neuronNumber(image) {
+    const m = /^(\d+)_/.exec(image);
+    return m ? parseInt(m[1], 10) : null;
+  }
+  function descriptionBlock(image) {
+    const n = neuronNumber(image);
+    const text = n != null ? DESCS[n] : null;
+    if (!text) {
+      if (n != null) console.warn('[c-napse] no description for neuron #' + n + ' (' + image + ')');
+      return '';
+    }
+    return `<div class="neuron-desc">${text}</div>`;
+  }
+
   // ── Junior card ──
   function juniorCard(j, idx) {
     const senior = SENIORS.find(s => s.group === j.group);
@@ -368,12 +372,9 @@
         </div>
 
         ${verseBlock(j.group)}
+        ${descriptionBlock(j.image)}
 
-        <button class="dl-btn" title="PNG 다운로드">⬇</button>
-        <div class="dl-menu">
-          <button class="dl-opt" data-q="std">표준<span class="dl-opt-sub">2x · ≈0.3MB</span></button>
-          <button class="dl-opt" data-q="hq">고화질<span class="dl-opt-sub">3x · ≈0.6MB</span></button>
-        </div>
+        <button class="dl-btn" title="고화질 PNG 다운로드">⬇</button>
       </article>
     `;
   }
@@ -475,12 +476,9 @@
         </div>
 
         ${verseBlock(s.group)}
+        ${descriptionBlock(s.image)}
 
-        <button class="dl-btn" title="PNG 다운로드">⬇</button>
-        <div class="dl-menu">
-          <button class="dl-opt" data-q="std">표준<span class="dl-opt-sub">2x · ≈0.3MB</span></button>
-          <button class="dl-opt" data-q="hq">고화질<span class="dl-opt-sub">3x · ≈0.6MB</span></button>
-        </div>
+        <button class="dl-btn" title="고화질 PNG 다운로드">⬇</button>
       </article>
     `;
   }
