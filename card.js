@@ -104,29 +104,46 @@
     const midWidth  = isHigh ? 3.4 : 3;
 
     // ── Intermittent action-potential ──
-    // CSS-driven now (offset-path) — SMIL removed for iOS Safari/iframe stability.
+    // SMIL (animateMotion + animate) — widely compatible across iOS Safari, desktop,
+    // Android Chrome, and isolated from CSS-transform-driven layout shifts (which
+    // caused WAAPI flicker on poster scale changes).
     // Cycle = 4.0–7.0s total per synapse; ~76% idle, ~22% active travel, 2% fade.
-    // Random phase offset (negative delay) so 200+ pulses don't align.
+    // Random phase offset (negative begin) so 200+ pulses don't align.
     const cycleDur    = 4.0 + sr(key, 'cycle') * 3.0;
     const phaseOffset = sr(key, 'phase') * cycleDur;
+    const pathId      = `synPath-${key}`;
     const cdStr       = cycleDur.toFixed(2);
     const beginStr    = (-phaseOffset).toFixed(2);
+    const AS = 0.76;               // active start fraction (idle→travel)
+    const AP = (AS + 0.01).toFixed(3);   // fade-in plateau
+    const AE = 0.98;               // fade-out end
 
     const shimmerLayer = `
       <path class="syn-shimmer" d="${d}" stroke="#EAF2FF" stroke-width="1.1"
             stroke-dasharray="8 72" stroke-linecap="round" fill="none"
             filter="url(#dot-${key})" opacity="0"
             style="--syn-dur:${cdStr}s; --syn-delay:${beginStr}s"/>`;
-    // Pulses ride the same bezier via CSS offset-path.
-    // The path coords match `d` exactly; SVG userspace transforms apply equally to both.
-    const pulseStyle = `offset-path:path('${d}');--syn-dur:${cdStr}s;--syn-delay:${beginStr}s`;
     const pulseLayer = `
-      <circle class="syn-pulse" r="3.2" fill="#EAF2FF" filter="url(#dot-${key})" opacity="0"
-              style="${pulseStyle};offset-rotate:auto"/>
-      <circle class="syn-pulse-core" r="1.3" fill="#FFFFFF" opacity="0"
-              style="${pulseStyle}"/>`;
+      <circle class="syn-pulse" r="3.2" fill="#EAF2FF" filter="url(#dot-${key})" opacity="0">
+        <animateMotion dur="${cdStr}s" repeatCount="indefinite" begin="${beginStr}s"
+                       keyPoints="0;0;1" keyTimes="0;${AS};1" rotate="auto">
+          <mpath xlink:href="#${pathId}" href="#${pathId}"/>
+        </animateMotion>
+        <animate attributeName="opacity" dur="${cdStr}s" repeatCount="indefinite" begin="${beginStr}s"
+                 values="0;0;0.95;0.95;0" keyTimes="0;${AS};${AP};${AE};1"/>
+      </circle>
+      <circle class="syn-pulse-core" r="1.3" fill="#FFFFFF" opacity="0">
+        <animateMotion dur="${cdStr}s" repeatCount="indefinite" begin="${beginStr}s"
+                       keyPoints="0;0;1" keyTimes="0;${AS};1">
+          <mpath xlink:href="#${pathId}" href="#${pathId}"/>
+        </animateMotion>
+        <animate attributeName="opacity" dur="${cdStr}s" repeatCount="indefinite" begin="${beginStr}s"
+                 values="0;0;1;1;0" keyTimes="0;${AS};${AP};${AE};1"/>
+      </circle>`;
 
     return `
+      <!-- Hidden path: animateMotion reference target (no stroke, no fill) -->
+      <path id="${pathId}" d="${d}" fill="none" stroke="none"/>
       <!-- Layer 1: outer halo (blurred) -->
       <path d="${d}" stroke="#7FB2E8" stroke-width="${haloWidth}" fill="none" opacity="0.13" filter="url(#blurA-${key})" stroke-linecap="round"/>
       <!-- Layer 2: mid glow -->
@@ -359,7 +376,7 @@
         </div>
 
         <!-- Synapse curve -->
-        <svg class="synapse" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+        <svg class="synapse" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
           <defs>${synapseDefs(key, startX, startY, tipX, tipY)}</defs>
           ${synapseCurve(startX, startY, tipX, tipY, key, { complexity: 'high' })}
         </svg>
@@ -464,7 +481,7 @@
           <div class="guiding-rows${denseClass}">${rows}</div>
         </div>
 
-        <svg class="synapse" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+        <svg class="synapse" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
           <defs>${defs}</defs>
           ${curveSVG}
         </svg>

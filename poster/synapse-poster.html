@@ -346,36 +346,13 @@
     animation: syn-shimmer-flow var(--syn-dur, 5s) linear infinite;
     animation-delay: var(--syn-delay, 0s);
   }
-  /* ── Action-potential pulse — CSS port of former SMIL animateMotion ── */
-  /* offset-path is set inline per-circle (see particle generation in script). */
-  @keyframes syn-pulse-travel {
-    0%, 76% { offset-distance: 0%;   opacity: 0; }
-    77%     { offset-distance: 0%;   opacity: 0.95; }
-    98%     { offset-distance: 100%; opacity: 0.95; }
-    100%    { offset-distance: 100%; opacity: 0; }
-  }
-  @keyframes syn-pulse-core-travel {
-    0%, 76% { offset-distance: 0%;   opacity: 0; }
-    77%     { offset-distance: 0%;   opacity: 1; }
-    98%     { offset-distance: 100%; opacity: 1; }
-    100%    { offset-distance: 100%; opacity: 0; }
-  }
-  .syn-pulse {
-    animation: syn-pulse-travel var(--syn-dur, 5s) linear infinite;
-    animation-delay: var(--syn-delay, 0s);
-    will-change: offset-distance, opacity;
-  }
-  .syn-pulse-core {
-    animation: syn-pulse-core-travel var(--syn-dur, 5s) linear infinite;
-    animation-delay: var(--syn-delay, 0s);
-    will-change: offset-distance, opacity;
-  }
-  /* Older browsers without offset-path: hide pulses (static layers stay). */
-  @supports not (offset-path: path("M0 0")) {
-    .syn-pulse, .syn-pulse-core { display: none; }
-  }
+  /* Pulses are SMIL-driven (animateMotion + animate) — no CSS animation here.
+     Intentionally no will-change: Android Chrome over-promotes SMIL-animated
+     SVG children and causes flicker when the poster is zoomed/panned. */
   @media (prefers-reduced-motion: reduce) {
     .syn-shimmer, .syn-pulse, .syn-pulse-core { animation: none !important; display: none !important; }
+    .syn-pulse animateMotion, .syn-pulse animate,
+    .syn-pulse-core animateMotion, .syn-pulse-core animate { display: none; }
   }
 </style>
 </head>
@@ -393,7 +370,7 @@
 <div class="poster" id="poster">
 
   <!-- Constellation background -->
-  <svg class="constellation" viewBox="0 0 1240 1754" preserveAspectRatio="none">
+  <svg class="constellation" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1240 1754" preserveAspectRatio="none">
     <defs>
       <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur stdDeviation="2"/>
@@ -941,14 +918,22 @@ function connectorSVG(jrCount, slotIdx){
     paths += `<path d="${d}" stroke="#EAF2FF" stroke-width="1.15" stroke-dasharray="${dashP}" opacity="0.9" fill="none" stroke-linecap="round"/>`;
 
     // 간헐적 활동 전위 — 76% 휴지 → 22% 주행 → 2% 페이드
-    // SMIL removed for iOS Safari/iframe stability — circles ride the same bezier
-    // via CSS `offset-path: path()`; keyframes drive offset-distance + opacity.
+    // SMIL (animateMotion + animate) is isolated from parent CSS transforms,
+    // so poster zoom/pan does not retrigger or stutter the traveling pulse.
+    const apId     = `apPath_${_connUid}_${jrIdx}`;
     const cycleDur = (4.0 + rand(s + 8.3) * 3.0).toFixed(2);  // 4.0–7.0s
     const phase    = (-(rand(s + 9.7) * parseFloat(cycleDur))).toFixed(2);
+    const AS = '0.76', AP = '0.770', AE = '0.98';
+    paths += `<path id="${apId}" d="${d}" fill="none" stroke="none"/>`;
     paths += `<path class="syn-shimmer" d="${d}" stroke="#EAF2FF" stroke-width="0.9" stroke-dasharray="6 74" stroke-linecap="round" fill="none" opacity="0" filter="url(#${mid})" style="--syn-dur:${cycleDur}s; --syn-delay:${phase}s"/>`;
-    const pulseStyle = `offset-path:path('${d}');--syn-dur:${cycleDur}s;--syn-delay:${phase}s`;
-    particles += `<circle class="syn-pulse" r="2.2" fill="#EAF2FF" opacity="0" filter="url(#${mid})" style="${pulseStyle};offset-rotate:auto"/>`;
-    particles += `<circle class="syn-pulse-core" r="0.9" fill="#FFFFFF" opacity="0" style="${pulseStyle}"/>`;
+    particles += `<circle class="syn-pulse" r="2.2" fill="#EAF2FF" opacity="0" filter="url(#${mid})">
+      <animateMotion dur="${cycleDur}s" repeatCount="indefinite" begin="${phase}s" keyPoints="0;0;1" keyTimes="0;${AS};1" rotate="auto"><mpath xlink:href="#${apId}" href="#${apId}"/></animateMotion>
+      <animate attributeName="opacity" dur="${cycleDur}s" repeatCount="indefinite" begin="${phase}s" values="0;0;0.95;0.95;0" keyTimes="0;${AS};${AP};${AE};1"/>
+    </circle>`;
+    particles += `<circle class="syn-pulse-core" r="0.9" fill="#FFFFFF" opacity="0">
+      <animateMotion dur="${cycleDur}s" repeatCount="indefinite" begin="${phase}s" keyPoints="0;0;1" keyTimes="0;${AS};1"><mpath xlink:href="#${apId}" href="#${apId}"/></animateMotion>
+      <animate attributeName="opacity" dur="${cycleDur}s" repeatCount="indefinite" begin="${phase}s" values="0;0;1;1;0" keyTimes="0;${AS};${AP};${AE};1"/>
+    </circle>`;
 
     // 베지어 위치/접선
     const bz = (t) => {

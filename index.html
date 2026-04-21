@@ -74,38 +74,10 @@
     animation: syn-shimmer-flow var(--syn-dur, 5s) linear infinite;
     animation-delay: var(--syn-delay, 0s);
   }
-  /* ── Action-potential pulse — CSS port of former SMIL animateMotion ── */
-  /* offset-path is set inline per-circle; here we drive offset-distance + opacity. */
-  @keyframes syn-pulse-travel {
-    0%, 76% { offset-distance: 0%;   opacity: 0; }
-    77%     { offset-distance: 0%;   opacity: 0.95; }
-    98%     { offset-distance: 100%; opacity: 0.95; }
-    100%    { offset-distance: 100%; opacity: 0; }
-  }
-  @keyframes syn-pulse-core-travel {
-    0%, 76% { offset-distance: 0%;   opacity: 0; }
-    77%     { offset-distance: 0%;   opacity: 1; }
-    98%     { offset-distance: 100%; opacity: 1; }
-    100%    { offset-distance: 100%; opacity: 0; }
-  }
-  .syn-pulse {
-    animation: syn-pulse-travel var(--syn-dur, 5s) linear infinite;
-    animation-delay: var(--syn-delay, 0s);
-    will-change: offset-distance, opacity;
-  }
-  .syn-pulse-core {
-    animation: syn-pulse-core-travel var(--syn-dur, 5s) linear infinite;
-    animation-delay: var(--syn-delay, 0s);
-    will-change: offset-distance, opacity;
-  }
-  /* Browsers without offset-path support (Firefox <128, older Safari) — hide pulses
-     so they don't sit stuck at the path origin. The static synapse layers stay visible. */
-  @supports not (offset-path: path("M0 0")) {
-    .syn-pulse, .syn-pulse-core, .nb-sig { display: none; }
-  }
-  /* GPU layer hint for active background signals */
-  .neural-bg .nb-sig { will-change: offset-distance, opacity; }
-  .neural-bg { contain: layout paint; }
+  /* Pulses + neural-bg signals are SMIL-driven — no CSS animation here.
+     Do NOT set will-change/contain on SMIL-animated SVG children: Android Chrome
+     over-promotes them to compositor layers and the whole SVG repaints on every
+     frame, causing static background paths to flicker alongside the pulses. */
 
   /* ── Poster view overlay ── */
   /* iframe renders poster at native 1240×1754; JS scales iframe via CSS transform to fit viewport. */
@@ -123,6 +95,7 @@
     position: relative; z-index: 510;
     overflow: hidden;
     flex: 0 0 auto;
+    contain: layout paint;
     /* width/height set dynamically by fitPosterFrame() to match scaled iframe */
   }
   .pv-frame {
@@ -185,6 +158,41 @@
     transition: transform .2s;
   }
   .pv-back:hover { transform: translateX(-3px); animation-duration: 1.5s; }
+
+  /* Poster-view download bar: parent-page proxy for iframe toolbar buttons.
+     Always full scale (regardless of iframe transform), easy to tap on mobile. */
+  .pv-dlbar {
+    position: absolute; top: 24px; right: 24px; z-index: 540;
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;
+    max-width: calc(100vw - 280px);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .pv-dlbar button {
+    background: linear-gradient(135deg,
+      rgba(127,178,232,0.22) 0%,
+      rgba(165,196,240,0.36) 50%,
+      rgba(127,178,232,0.22) 100%);
+    border: 1px solid rgba(127,178,232,0.55);
+    color: var(--ink-0);
+    font-family: inherit; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.08em;
+    padding: 9px 14px; border-radius: 6px;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    transition: transform .15s ease, background .15s ease;
+  }
+  .pv-dlbar button:hover {
+    transform: translateY(-1px);
+    background: linear-gradient(135deg,
+      rgba(127,178,232,0.34) 0%,
+      rgba(165,196,240,0.50) 50%,
+      rgba(127,178,232,0.34) 100%);
+  }
+  .pv-dlbar button:disabled { opacity: 0.55; cursor: wait; }
+  @media (max-width: 768px) {
+    .pv-dlbar { top: 76px; right: 12px; left: 12px; max-width: none; justify-content: center; gap: 6px; }
+    .pv-dlbar button { font-size: 10px; padding: 7px 10px; letter-spacing: 0.04em; }
+  }
 
   /* Transition keyframes */
   @keyframes view-shrink {
@@ -599,6 +607,12 @@
 <!-- Poster view overlay (toggleable) -->
 <div class="poster-view" id="poster-view" aria-hidden="true">
   <button class="pv-back" id="pv-back">◂ 카드 뷰로 돌아가기</button>
+  <div class="pv-dlbar" id="pv-dlbar" role="toolbar" aria-label="포스터 다운로드">
+    <button data-dl="dl-prev" type="button">미리보기 1240×1754</button>
+    <button data-dl="dl-300"  type="button">A3 · 300 DPI</button>
+    <button data-dl="dl-600"  type="button">A3 · 600 DPI</button>
+    <button data-dl="dl-print" type="button">PRINT / PDF</button>
+  </div>
   <div class="pv-frame-wrap" id="pv-frame-wrap">
     <iframe class="pv-frame" id="pv-frame" title="C-NAPSE 2026 시냅스 명단 포스터"></iframe>
   </div>
@@ -793,22 +807,38 @@
     }
   }
 
+  // Diff-check debounce: skip the transform re-commit when scale barely changes.
+  // Rapid transform updates re-trigger SMIL compositing in Android Chrome and
+  // cause the poster synapses to flicker during resize/zoom.
+  let lastScale = null;
   function fitPosterFrame() {
-    // Width-only fit — never scale up beyond 1; vertical overflow is allowed
-    // (poster-view scrolls). This keeps the poster fully readable on narrow
-    // viewports without squashing it on landscape monitors.
     const padding = 48;
     const vw = Math.max(0, window.innerWidth - padding);
     const scale = Math.min(vw / POSTER_W, 1);
+    if (lastScale !== null && Math.abs(scale - lastScale) < 0.005) return;
+    lastScale = scale;
     pvFrame.style.transform = `scale(${scale})`;
     pvFrame.style.transformOrigin = 'top left';
     frameWrap.style.width  = (POSTER_W * scale) + 'px';
     frameWrap.style.height = (POSTER_H * scale) + 'px';
   }
 
+  // iPad/iOS Safari bug: SMIL inside an iframe that was hidden at load time
+  // does not auto-start when visibility flips. Manually kick every timeline.
+  function kickSMIL() {
+    try {
+      const doc = pvFrame.contentDocument;
+      if (!doc) return;
+      doc.querySelectorAll('animate, animateMotion, animateTransform, set').forEach(el => {
+        try { el.beginElement(); } catch (e) { /* element not yet in timeline */ }
+      });
+    } catch (e) { /* cross-origin guard */ }
+  }
+
   pvFrame.addEventListener('load', () => {
     injectPosterOverrides();
     fitPosterFrame();
+    kickSMIL();
   });
 
   let resizeRaf = 0;
@@ -843,6 +873,10 @@
       posterView.setAttribute('aria-hidden', 'false');
       posterView.scrollTop = 0;
       fitPosterFrame();
+      if (posterLoaded) {
+        setTimeout(kickSMIL, 50);
+        setTimeout(kickSMIL, 300);
+      }
     }, 420);
   }
 
@@ -856,6 +890,26 @@
 
   btnViewPoster.addEventListener('click', openPoster);
   btnBack.addEventListener('click', closePoster);
+
+  // Proxy the parent-page download bar to the iframe's own handlers so the
+  // toolbar stays at full scale (the iframe itself is CSS-scaled).
+  document.getElementById('pv-dlbar').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-dl]');
+    if (!btn) return;
+    ensurePosterLoaded();
+    const id = btn.dataset.dl;
+    const kick = () => {
+      const doc = pvFrame.contentDocument;
+      const tgt = doc && doc.getElementById(id);
+      if (tgt) tgt.click();
+    };
+    // If the iframe hasn't loaded yet, wait for it.
+    if (pvFrame.contentDocument && pvFrame.contentDocument.readyState === 'complete') {
+      kick();
+    } else {
+      pvFrame.addEventListener('load', kick, { once: true });
+    }
+  });
 
   // ESC to exit poster
   document.addEventListener('keydown', (e) => {
