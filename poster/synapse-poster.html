@@ -350,9 +350,10 @@
      Intentionally no will-change: Android Chrome over-promotes SMIL-animated
      SVG children and causes flicker when the poster is zoomed/panned. */
   @media (prefers-reduced-motion: reduce) {
-    .syn-shimmer, .syn-pulse, .syn-pulse-core { animation: none !important; display: none !important; }
-    .syn-pulse animateMotion, .syn-pulse animate,
-    .syn-pulse-core animateMotion, .syn-pulse-core animate { display: none; }
+    /* Hide only the CSS shimmer; keep SMIL pulses visible — they ARE the
+       constellation. The pulses are intermittent (~76% idle) so they already
+       respect the spirit of reduced-motion without going totally static. */
+    .syn-shimmer { animation: none !important; opacity: 0; }
   }
 </style>
 </head>

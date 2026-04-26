@@ -233,10 +233,11 @@
   html.scrolling .syn-shimmer,
   html.scrolling .nb-sig { animation-play-state: paused !important; }
   @media (prefers-reduced-motion: reduce) {
-    .syn-shimmer, .syn-pulse, .syn-pulse-core, .nb-sig {
-      animation: none !important;
-      display: none !important;
-    }
+    /* Only stop the CSS-driven shimmer (continuous dash motion).
+       Leave SMIL pulses + signals running — they ARE the site, and hiding
+       them leaves dead empty cards/background. The pulses are intermittent
+       (~76% idle) which already respects reduced-motion intent. */
+    .syn-shimmer { animation: none !important; opacity: 0; }
   }
 
   /* Header */
