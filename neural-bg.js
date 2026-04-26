@@ -262,68 +262,30 @@
     parent.insertBefore(svg, parent.firstChild);
   }
 
-  // Public API: explosive signal burst. Every signal fires at exactly NOW
-  // (forced via beginElement so each click registers even when the SVG
-  // timeline is already past 0). Multiple clicks stack — each call is its
-  // own batch with its own cleanup, so rapid spamming literally piles
-  // signals onto the canvas. A center-out shockwave ring punctuates the pop.
+  // Public API: signal burst. Every signal fires at NOW via beginElement()
+  // so each click registers even when the SVG timeline is already past 0.
+  // Multiple clicks stack — each call is its own batch with its own
+  // cleanup, so rapid spamming piles signals onto the canvas without the
+  // batches fighting each other.
   function burst() {
     const svg = document.getElementById('neural-bg');
     if (!svg) return 0;
     const sigGroup = svg.querySelector('.nb-signals');
     if (!sigGroup) return 0;
     const count = isMobile
-      ? Math.floor(110 + Math.random() * 50)   // 110–160 mobile
-      : Math.floor(200 + Math.random() * 90);  // 200–290 desktop — really pop
+      ? Math.floor(45 + Math.random() * 25)    // 45–70 mobile
+      : Math.floor(80 + Math.random() * 35);   // 80–115 desktop
     const NS = 'http://www.w3.org/2000/svg';
     const XLINK = 'http://www.w3.org/1999/xlink';
     const elements = [];
     const animsToKick = [];
 
-    // ── Shockwave ring expanding from center of viewBox ──
-    {
-      const ring = document.createElementNS(NS, 'circle');
-      ring.setAttribute('class', 'nb-burst-shock');
-      ring.setAttribute('cx', String(VB_W / 2));
-      ring.setAttribute('cy', String(VB_H / 2));
-      ring.setAttribute('r', '20');
-      ring.setAttribute('fill', 'none');
-      ring.setAttribute('stroke', '#EAF2FF');
-      ring.setAttribute('stroke-width', '4');
-      ring.setAttribute('opacity', '0');
-      ring.setAttribute('filter', 'url(#nbDot)');
-
-      const r = document.createElementNS(NS, 'animate');
-      r.setAttribute('attributeName', 'r');
-      r.setAttribute('dur', '0.55s');
-      r.setAttribute('begin', '0s');
-      r.setAttribute('values', '20;1400');
-      r.setAttribute('repeatCount', '1');
-      r.setAttribute('fill', 'remove');
-
-      const o = document.createElementNS(NS, 'animate');
-      o.setAttribute('attributeName', 'opacity');
-      o.setAttribute('dur', '0.55s');
-      o.setAttribute('begin', '0s');
-      o.setAttribute('values', '0;0.85;0');
-      o.setAttribute('keyTimes', '0;0.12;1');
-      o.setAttribute('repeatCount', '1');
-      o.setAttribute('fill', 'remove');
-
-      ring.appendChild(r);
-      ring.appendChild(o);
-      sigGroup.appendChild(ring);
-      elements.push(ring);
-      animsToKick.push(r, o);
-    }
-
-    // ── Storm ──
     for (let i = 0; i < count; i++) {
       const axIdx   = Math.floor(Math.random() * AXON_PATHS.length);
-      const dur     = 0.40 + Math.random() * 0.50;   // 0.40–0.90s, snappy
+      const dur     = 1.4 + Math.random() * 1.0;   // 1.4–2.4s, lingering
       const reverse = Math.random() < 0.5;
-      const size    = (3.8 + Math.random() * 4.6).toFixed(2);  // 3.8–8.4, bigger
-      const peak    = (0.95 + Math.random() * 0.05).toFixed(2);
+      const size    = (3.0 + Math.random() * 3.0).toFixed(2);  // 3.0–6.0
+      const peak    = (0.85 + Math.random() * 0.15).toFixed(2);
 
       const c = document.createElementNS(NS, 'circle');
       c.setAttribute('class', 'nb-sig nb-burst');
@@ -350,9 +312,9 @@
       op.setAttribute('attributeName', 'opacity');
       op.setAttribute('dur', dur.toFixed(2) + 's');
       op.setAttribute('begin', '0s');
-      // Fast spike (0→peak in 4%), hold to 60%, fast fade — pop & vanish.
+      // Quick spike, long hold, gentle fade — signals linger.
       op.setAttribute('values', `0;${peak};${peak};0`);
-      op.setAttribute('keyTimes', '0;0.04;0.60;1');
+      op.setAttribute('keyTimes', '0;0.06;0.80;1');
       op.setAttribute('repeatCount', '1');
       op.setAttribute('fill', 'remove');
 
@@ -368,8 +330,8 @@
     // page begin="0s" lies in the past and the new batch may never fire.
     animsToKick.forEach(a => { try { a.beginElement(); } catch (e) {} });
 
-    // Each batch cleans itself; concurrent batches don't fight.
-    setTimeout(() => elements.forEach(e => e.remove()), 1300);
+    // Max dur is 2.4s; cleanup at 2.6s gives a small safety margin.
+    setTimeout(() => elements.forEach(e => e.remove()), 2600);
     return count;
   }
 
