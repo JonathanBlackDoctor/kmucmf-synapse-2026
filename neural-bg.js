@@ -262,26 +262,26 @@
     parent.insertBefore(svg, parent.firstChild);
   }
 
-  // Public API: temporary signal storm. Adds 80–120 (or ~60% on mobile)
-  // single-shot SMIL signals, riding random axons at brisk speeds, then
-  // removes them after 4s. Used for the ⚡ easter-egg button.
+  // Public API: explosive signal burst. Every signal fires at exactly t=0 with
+  // a near-instant fade-in, sprints down its axon in 0.55–1.0s, and is gone in
+  // ~1.2s wall-clock. Synchronized start = single big "pop" feel.
   function burst() {
     const svg = document.getElementById('neural-bg');
     if (!svg) return 0;
     const sigGroup = svg.querySelector('.nb-signals');
     if (!sigGroup) return 0;
     const count = isMobile
-      ? Math.floor(48 + Math.random() * 24)
-      : Math.floor(80 + Math.random() * 40);
+      ? Math.floor(60 + Math.random() * 30)    // 60–90 mobile
+      : Math.floor(110 + Math.random() * 50);  // 110–160 desktop — more punch
     const NS = 'http://www.w3.org/2000/svg';
     const XLINK = 'http://www.w3.org/1999/xlink';
     const elements = [];
     for (let i = 0; i < count; i++) {
       const axIdx   = Math.floor(Math.random() * AXON_PATHS.length);
-      const dur     = 1.0 + Math.random() * 1.4;
-      const begin   = -Math.random() * 0.4;
+      const dur     = 0.55 + Math.random() * 0.45;   // short, snappy
       const reverse = Math.random() < 0.5;
-      const size    = (2.4 + Math.random() * 3.0).toFixed(2);
+      const size    = (3.0 + Math.random() * 3.5).toFixed(2); // larger
+      const peak    = (0.9 + Math.random() * 0.1).toFixed(2);
 
       const c = document.createElementNS(NS, 'circle');
       c.setAttribute('class', 'nb-sig nb-burst');
@@ -292,7 +292,7 @@
 
       const am = document.createElementNS(NS, 'animateMotion');
       am.setAttribute('dur', dur.toFixed(2) + 's');
-      am.setAttribute('begin', begin.toFixed(2) + 's');
+      am.setAttribute('begin', '0s');           // synchronized — all fire together
       am.setAttribute('repeatCount', '1');
       am.setAttribute('fill', 'remove');
       am.setAttribute('keyPoints', reverse ? '1;0' : '0;1');
@@ -307,9 +307,10 @@
       const op = document.createElementNS(NS, 'animate');
       op.setAttribute('attributeName', 'opacity');
       op.setAttribute('dur', dur.toFixed(2) + 's');
-      op.setAttribute('begin', begin.toFixed(2) + 's');
-      op.setAttribute('values', '0;0.95;0.95;0');
-      op.setAttribute('keyTimes', '0;0.12;0.85;1');
+      op.setAttribute('begin', '0s');
+      // Fast spike (0→peak in 5%), hold briefly, then fast fade out — explosion feel.
+      op.setAttribute('values', `0;${peak};${peak};0`);
+      op.setAttribute('keyTimes', '0;0.05;0.55;1');
       op.setAttribute('repeatCount', '1');
       op.setAttribute('fill', 'remove');
 
@@ -318,7 +319,8 @@
       sigGroup.appendChild(c);
       elements.push(c);
     }
-    setTimeout(() => elements.forEach(e => e.remove()), 4000);
+    // All durations ≤ 1.0s; cleanup at 1.2s gives a small safety margin.
+    setTimeout(() => elements.forEach(e => e.remove()), 1200);
     return count;
   }
 
