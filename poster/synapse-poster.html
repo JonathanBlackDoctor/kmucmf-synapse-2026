@@ -1065,9 +1065,16 @@ function renderGrid(){
 
 renderGrid();
 
-/* Inject complex neural background into .poster (behind constellation) */
-window.__NEURAL_BG_PARENT = '#poster';
+/* Inject complex neural background into .poster (behind constellation).
+   Safari's SMIL renderer chokes when the poster's 224 constellation animations
+   compose with neural-bg's extra 26+ — frame-rate drops to single digits during
+   pinch-zoom/pan. The constellation is dense enough on its own; on Safari we
+   skip the wallpaper. Other browsers keep it. */
 (function loadNeuralBg(){
+  const ua = navigator.userAgent;
+  const isSafari = /Safari/.test(ua) && !/Chrome|Chromium|Edg|Android/.test(ua);
+  if (isSafari) return;
+  window.__NEURAL_BG_PARENT = '#poster';
   const s = document.createElement('script');
   s.src = '../neural-bg.js';
   document.body.appendChild(s);

@@ -262,6 +262,68 @@
     parent.insertBefore(svg, parent.firstChild);
   }
 
+  // Public API: temporary signal storm. Adds 80–120 (or ~60% on mobile)
+  // single-shot SMIL signals, riding random axons at brisk speeds, then
+  // removes them after 4s. Used for the ⚡ easter-egg button.
+  function burst() {
+    const svg = document.getElementById('neural-bg');
+    if (!svg) return 0;
+    const sigGroup = svg.querySelector('.nb-signals');
+    if (!sigGroup) return 0;
+    const count = isMobile
+      ? Math.floor(48 + Math.random() * 24)
+      : Math.floor(80 + Math.random() * 40);
+    const NS = 'http://www.w3.org/2000/svg';
+    const XLINK = 'http://www.w3.org/1999/xlink';
+    const elements = [];
+    for (let i = 0; i < count; i++) {
+      const axIdx   = Math.floor(Math.random() * AXON_PATHS.length);
+      const dur     = 1.0 + Math.random() * 1.4;
+      const begin   = -Math.random() * 0.4;
+      const reverse = Math.random() < 0.5;
+      const size    = (2.4 + Math.random() * 3.0).toFixed(2);
+
+      const c = document.createElementNS(NS, 'circle');
+      c.setAttribute('class', 'nb-sig nb-burst');
+      c.setAttribute('r', size);
+      c.setAttribute('fill', '#EAF2FF');
+      c.setAttribute('filter', 'url(#nbDot)');
+      c.setAttribute('opacity', '0');
+
+      const am = document.createElementNS(NS, 'animateMotion');
+      am.setAttribute('dur', dur.toFixed(2) + 's');
+      am.setAttribute('begin', begin.toFixed(2) + 's');
+      am.setAttribute('repeatCount', '1');
+      am.setAttribute('fill', 'remove');
+      am.setAttribute('keyPoints', reverse ? '1;0' : '0;1');
+      am.setAttribute('keyTimes', '0;1');
+      am.setAttribute('rotate', 'auto');
+
+      const mp = document.createElementNS(NS, 'mpath');
+      mp.setAttributeNS(XLINK, 'xlink:href', '#nb-ax-' + axIdx);
+      mp.setAttribute('href', '#nb-ax-' + axIdx);
+      am.appendChild(mp);
+
+      const op = document.createElementNS(NS, 'animate');
+      op.setAttribute('attributeName', 'opacity');
+      op.setAttribute('dur', dur.toFixed(2) + 's');
+      op.setAttribute('begin', begin.toFixed(2) + 's');
+      op.setAttribute('values', '0;0.95;0.95;0');
+      op.setAttribute('keyTimes', '0;0.12;0.85;1');
+      op.setAttribute('repeatCount', '1');
+      op.setAttribute('fill', 'remove');
+
+      c.appendChild(am);
+      c.appendChild(op);
+      sigGroup.appendChild(c);
+      elements.push(c);
+    }
+    setTimeout(() => elements.forEach(e => e.remove()), 4000);
+    return count;
+  }
+
+  window.__CNAPSE_NEURAL = { burst };
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', inject);
   } else {

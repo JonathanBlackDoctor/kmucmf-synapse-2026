@@ -274,6 +274,19 @@
   .btn:hover { background: rgba(127,178,232,0.18); border-color: var(--cy-1); }
   .btn.primary { background: rgba(127,178,232,0.2); border-color: var(--cy-1); color: var(--ink-0); }
 
+  /* ⚡ Burst button — square aspect, glyph-only. No label by design (easter egg). */
+  .btn.burst {
+    padding: 10px 14px; font-size: 16px; line-height: 1;
+    transition: transform .15s ease, box-shadow .15s ease, background .2s;
+  }
+  .btn.burst:hover { transform: translateY(-1px); }
+  @keyframes burst-fire {
+    0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(127,178,232,0.0); }
+    40%  { transform: scale(1.18); box-shadow: 0 0 24px rgba(127,178,232,0.75); }
+    100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(127,178,232,0.0); }
+  }
+  .btn.burst.firing { animation: burst-fire 0.32s ease; }
+
   .group-nav {
     display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px;
   }
@@ -519,6 +532,11 @@
     color: var(--cy-0); opacity: 0.92;
     text-wrap: balance;
     word-break: keep-all;
+    /* Drop shadow + ~18% stronger blue glow for readability over the synapse art */
+    text-shadow:
+      0 0 1px rgba(0,0,0,0.6),
+      0 1px 2px rgba(0,0,0,0.35),
+      0 0 9px rgba(127,178,232,0.22);
   }
   /* nowrap <span> 등 내부 요소가 .card *의 font-size: initial에 걸리지 않도록 */
   .verse-body * { font-size: inherit; }
@@ -527,9 +545,24 @@
     font-family: 'Cormorant Garamond', serif; font-style: italic;
     font-size: 11px; color: var(--cy-1); opacity: 0.7;
     letter-spacing: 0.05em;
+    text-shadow:
+      0 0 1px rgba(0,0,0,0.6),
+      0 1px 2px rgba(0,0,0,0.35),
+      0 0 8px rgba(165,196,240,0.20);
   }
 
-  /* Download button — single HQ click → static PNG file */
+  /* Download button — single HQ click → static PNG file.
+     Subtle pulse so users notice it's clickable; hover halts the animation. */
+  @keyframes dl-btn-pulse {
+    0%, 100% {
+      opacity: 0.55;
+      box-shadow: 0 0 0 0 rgba(127,178,232,0);
+    }
+    50% {
+      opacity: 0.95;
+      box-shadow: 0 0 12px rgba(127,178,232,0.45);
+    }
+  }
   .dl-btn {
     position: absolute; top: 10px; right: 10px;
     z-index: 10;
@@ -538,12 +571,19 @@
     border: 1px solid rgba(127,178,232,0.4);
     color: var(--cy-0); cursor: pointer;
     font-size: 14px;
-    opacity: 0; transition: opacity .2s, background .2s;
+    transition: background .2s, transform .15s;
     text-decoration: none;
     display: inline-flex; align-items: center; justify-content: center;
+    animation: dl-btn-pulse 2.8s ease-in-out infinite;
   }
-  .card:hover .dl-btn { opacity: 1; }
-  .dl-btn:hover { background: rgba(127,178,232,0.25); }
+  .dl-btn:hover {
+    animation: none;
+    opacity: 1;
+    background: rgba(127,178,232,0.25);
+    transform: scale(1.05);
+  }
+  /* Render-mode (PNG capture) hides pulse to keep snapshots stable. */
+  html.render-mode .dl-btn { animation: none !important; opacity: 0 !important; }
 
   /* ── Neuron description (English) — bottom band, hover-expand ── */
   .neuron-desc {
@@ -561,6 +601,7 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
     transition: opacity .25s ease, -webkit-line-clamp .25s ease;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.4);
   }
   .card:hover .neuron-desc {
     opacity: 0.95;
@@ -577,6 +618,91 @@
   }
   .dl-overlay.active { display: flex; }
 
+  /* C-NAPSE program intro panel — between header and cards.
+     Collapsible (✕), reopenable via floating ℹ️ FAB; choice persisted in localStorage. */
+  @keyframes cnapse-intro-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .cnapse-intro {
+    max-width: 680px;
+    margin: 8px auto 26px;
+    padding: 16px 44px 16px 20px;
+    position: relative;
+    background: rgba(13,24,54,0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(127,178,232,0.18);
+    border-radius: 10px;
+    overflow: hidden;
+    max-height: 320px;
+    transition: max-height .4s ease, opacity .4s ease,
+                padding .4s ease, margin .4s ease, border-color .4s ease;
+    animation: cnapse-intro-in .5s ease;
+  }
+  .cnapse-intro[data-collapsed="true"] {
+    max-height: 0; opacity: 0;
+    padding-top: 0; padding-bottom: 0;
+    margin-top: 0; margin-bottom: 0;
+    border-color: transparent;
+    pointer-events: none;
+  }
+  .cnapse-intro-body {
+    margin: 0;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px; line-height: 1.7;
+    color: rgba(234,242,255,0.78);
+    word-break: keep-all;
+  }
+  .cnapse-intro-close {
+    position: absolute; top: 8px; right: 10px;
+    width: 28px; height: 28px;
+    background: transparent; border: none;
+    color: rgba(234,242,255,0.55); font-size: 18px;
+    cursor: pointer; line-height: 1;
+    transition: color .15s ease, transform .15s ease;
+  }
+  .cnapse-intro-close:hover { color: rgba(234,242,255,1); transform: scale(1.1); }
+  .cnapse-intro-reopen {
+    position: fixed; bottom: 22px; right: 22px; z-index: 480;
+    width: 40px; height: 40px;
+    background: rgba(13,24,54,0.7);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(127,178,232,0.28);
+    border-radius: 50%;
+    color: rgba(234,242,255,0.9); font-size: 16px;
+    cursor: pointer;
+    transition: transform .15s ease, background .15s ease, border-color .15s ease;
+  }
+  .cnapse-intro-reopen:hover {
+    transform: scale(1.08);
+    background: rgba(13,24,54,0.85);
+    border-color: rgba(127,178,232,0.5);
+  }
+  .cnapse-intro-reopen[hidden] { display: none; }
+  body.view-posters .cnapse-intro-reopen { display: none; }
+  /* Mobile: backdrop-filter is GPU-expensive on phones — drop it for a flat fill. */
+  @media (max-width: 768px) {
+    .cnapse-intro {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background: rgba(13,24,54,0.72);
+      margin: 4px 14px 18px;
+      padding: 14px 38px 14px 16px;
+    }
+    .cnapse-intro-body { font-size: 13px; line-height: 1.65; }
+    .cnapse-intro-reopen {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background: rgba(13,24,54,0.85);
+      bottom: 16px; right: 16px;
+    }
+  }
+  /* Render-mode (PNG capture): hide the intro chrome so cards shoot solo. */
+  html.render-mode .cnapse-intro,
+  html.render-mode .cnapse-intro-reopen { display: none !important; }
+
   /* smaller screens */
   @media (max-width: 640px) {
     .grid { grid-template-columns: 1fr; }
@@ -589,15 +715,21 @@
 
 <header class="page-header">
   <h1 class="title">C-NAPSE · 2026</h1>
-  <div class="subtitle">KEIMYUNG · CMF · MATCHING CARDS · 56 SHEETS</div>
+  <div class="subtitle">KEIMYUNG · CMF · MATCHING CARDS · 57 SHEETS</div>
   <div class="kicker">선배와 후배, 두 뉴런이 시냅스로 만나는 지점. 신호가 흐르고, 공동체가 자라납니다.</div>
   <div class="controls">
     <button class="btn view-toggle" id="btn-view-poster">✦ 전체 포스터 보기</button>
     <button class="btn primary" id="btn-download-all">⬇ 전체 57장 고화질 ZIP</button>
-    <button class="btn" id="btn-download-json">⬇ cards_data.json</button>
+    <button class="btn burst" id="btn-burst" type="button" aria-label="Signal burst">⚡</button>
   </div>
   <nav class="group-nav" id="group-nav"></nav>
 </header>
+
+<aside class="cnapse-intro" id="cnapse-intro" data-collapsed="false" aria-label="C-NAPSE 프로그램 안내">
+  <button class="cnapse-intro-close" type="button" id="cnapse-intro-close" aria-label="안내 닫기">×</button>
+  <p class="cnapse-intro-body">시냅스(C-NAPSE)는 신입생과 선배의 연결이 신경세포의 시냅스처럼 긴밀하길 바라는 프로그램입니다. 시냅스를 통해 깊은 교제를 누리시면 좋겠습니다❤️ 카드의 뉴런은 57명 모두 다르고, 좌상단의 작은 뉴런은 여러분의 멘토 또는 후배를 상징합니다. 같은 그룹은 같은 계열의 뉴런으로 묶여 있는 등 디테일들이 숨어 있으니, 주변 카드와 비교해보셔도 재밌을 거예요😆</p>
+</aside>
+<button class="cnapse-intro-reopen" id="cnapse-intro-reopen" type="button" aria-label="C-NAPSE 안내 다시 열기" hidden>ℹ️</button>
 
 <main id="app"></main>
 
@@ -734,15 +866,47 @@
     }
   });
 
-  // JSON export
-  document.getElementById('btn-download-json').addEventListener('click', () => {
-    const data = { seniors: SENIORS, juniors: JUNIORS, verses: VERSES };
-    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'cards_data.json';
-    a.click();
-  });
+  // ── C-NAPSE intro panel: collapse on ✕, reopen on ℹ️, persist in localStorage ──
+  (function setupIntroPanel(){
+    const intro = document.getElementById('cnapse-intro');
+    const closeBtn = document.getElementById('cnapse-intro-close');
+    const reopen = document.getElementById('cnapse-intro-reopen');
+    if (!intro || !closeBtn || !reopen) return;
+    const STORAGE_KEY = 'cnapse_intro_seen';
+    const safeGet = () => { try { return localStorage.getItem(STORAGE_KEY) === 'true'; } catch (e) { return false; } };
+    const safeSet = () => { try { localStorage.setItem(STORAGE_KEY, 'true'); } catch (e) {} };
+    if (safeGet()) {
+      intro.dataset.collapsed = 'true';
+      intro.setAttribute('aria-hidden', 'true');
+      reopen.hidden = false;
+    }
+    closeBtn.addEventListener('click', () => {
+      intro.dataset.collapsed = 'true';
+      intro.setAttribute('aria-hidden', 'true');
+      reopen.hidden = false;
+      safeSet();
+    });
+    reopen.addEventListener('click', () => {
+      intro.dataset.collapsed = 'false';
+      intro.setAttribute('aria-hidden', 'false');
+      reopen.hidden = true;
+    });
+  })();
+
+  // ⚡ Signal burst (easter egg) — fires 80–120 single-shot pulses across the
+  // background axons. No label, no explanation, just a fun discovery.
+  const btnBurst = document.getElementById('btn-burst');
+  if (btnBurst) {
+    btnBurst.addEventListener('click', () => {
+      btnBurst.classList.remove('firing');
+      // reflow trick so the animation restarts on rapid re-clicks
+      void btnBurst.offsetWidth;
+      btnBurst.classList.add('firing');
+      setTimeout(() => btnBurst.classList.remove('firing'), 320);
+      const api = window.__CNAPSE_NEURAL;
+      if (api && typeof api.burst === 'function') api.burst();
+    });
+  }
 
   // ═══════════════════════════════════════════════════════════════
   // Poster view manager — native-size iframe + CSS-transform fit
